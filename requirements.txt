@@ -1,0 +1,12 @@
+# PyTorch
+torch==2.6.0
+torchvision==0.21.0
+
+# 图像处理
+opencv-python-headless==4.10.0.84
+numpy==2.0.2
+pillow==11.0.0
+
+# 工具（可选）
+matplotlib==3.9.2
+tqdm==4.66.5
