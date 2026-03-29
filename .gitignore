@@ -35,3 +35,7 @@
 *.thm
 .DS_Store
 *.bak
+.venv/
+__pycache__/
+*.pyc
+*.pth

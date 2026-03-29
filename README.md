@@ -5,11 +5,12 @@ More detection and recognition methods will be supported!
 
 ## Prerequisite
 
-- python-3.5+
-- pytorch-0.4.1+
-- torchvision-0.2.1
-- opencv-3.4.0.14
-- numpy-1.14.3
+- Python 3.12
+- PyTorch 2.6.0
+- torchvision 0.21.0
+- opencv-python-headless 4.10.0.84
+- numpy 2.0.2
+- pillow 11.0.0
 
 
 They could all be installed through pip except pytorch and torchvision. As for pytorch and torchvision, 
