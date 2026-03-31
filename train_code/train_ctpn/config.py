@@ -11,8 +11,8 @@ base_dir = './images'
 img_dir = os.path.join(base_dir, 'VOC2007_text_detection/JPEGImages')
 xml_dir = os.path.join(base_dir, 'VOC2007_text_detection/Annotations')
 
-icdar17_mlt_img_dir = '/home/data2/egz/ICDAR2017_MLT/train/'
-icdar17_mlt_gt_dir = '/home/data2/egz/ICDAR2017_MLT/train_gt/'
+icdar17_mlt_img_dir = '\\kaggle\\input\\ch4_training_images'
+icdar17_mlt_gt_dir = '\\kaggle\\input\\ch4_training_localization_transcription_gt'
 num_workers = 2
 pretrained_weights = 'checkpoints/v3_ctpn_ep22_0.3801_0.0971_0.4773.pth'
 
@@ -30,5 +30,5 @@ RPN_TOTAL_NUM = 300
 IMAGE_MEAN = [123.68, 116.779, 103.939]
 OHEM = True
 
-checkpoints_dir = './checkpoints'
-outputs = r'./logs'
+checkpoints_dir = '\\kaggle\\working\\checkpoints'
+outputs = '\\kaggle\\working\\logs'
