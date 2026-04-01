@@ -18,11 +18,11 @@ if IS_KAGGLE:
     icdar15_img_dir = '/kaggle/input/icdar2015/ch4_training_images'
     icdar15_gt_dir = '/kaggle/input/icdar2015/ch4_training_localization_transcription_gt'
 else:
-    icdar15_img_dir = kaggle_root+'/kaggle/input/icdar2015/ch4_training_images'
-    icdar15_gt_dir = kaggle_root+'/kaggle/input/icdar2015/ch4_training_localization_transcription_gt'
-print(icdar15_gt_dir,icdar15_gt_dir)
+    icdar15_img_dir = kaggle_root+'/kaggle/input/datasets/hafizshehbazali/icdar2015/ch4_training_images'
+    icdar15_gt_dir = kaggle_root+'/kaggle/input/datasets/hafizshehbazali/icdar2015/ch4_training_localization_transcription_gt'
+# print(icdar15_gt_dir,icdar15_gt_dir)
 num_workers = 2
-pretrained_weights = '/kaggle/input/CTPN'
+pretrained_weights = '/kaggle/input/datasets/pretriained-ctpn'
 
 anchor_scale = 16
 IOU_NEGATIVE = 0.3
