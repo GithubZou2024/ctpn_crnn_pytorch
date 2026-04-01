@@ -153,7 +153,7 @@ class ICDARDataset(Dataset):
 
     def parse_gtfile(self,gt_path,rescale_fac = 1.0):
         coor_lists = list()
-        with open(gt_path) as f:
+        with open(gt_path,'r', encoding='utf-8-sig') as f:
             content = f.readlines()
             for line in content:
                 coor_list = line.split(',')[:8]
