@@ -54,7 +54,7 @@ if __name__ == '__main__':
     if os.path.exists(checkpoints_weight):
         pretrained = False
 
-    dataset = ICDARDataset(config.icdar17_mlt_img_dir, config.icdar17_mlt_gt_dir)
+    dataset = ICDARDataset(config.icdar15_img_dir, config.icdar15_gt_dir)
     dataloader = DataLoader(dataset, batch_size=1, shuffle=True, num_workers=config.num_workers)
     model = CTPN_Model()
     model.to(device)

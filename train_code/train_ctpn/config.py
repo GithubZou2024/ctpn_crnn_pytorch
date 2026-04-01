@@ -12,8 +12,8 @@ img_dir = os.path.join(base_dir, 'VOC2007_text_detection/JPEGImages')
 xml_dir = os.path.join(base_dir, 'VOC2007_text_detection/Annotations')
 
 # Kaggle数据集路径（根据实际导入的数据集名称修改）
-icdar17_mlt_img_dir = '/kaggle/input/icdar2015/ch4_training_images'
-icdar17_mlt_gt_dir = '/kaggle/input/icdar2015/ch4_training_localization_transcription_gt'
+icdar15_img_dir = '/kaggle/input/icdar2015/ch4_training_images'
+icdar15_gt_dir = '/kaggle/input/icdar2015/ch4_training_localization_transcription_gt'
 num_workers = 2
 pretrained_weights = '/kaggle/input/CTPN'
 
