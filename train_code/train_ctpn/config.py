@@ -15,11 +15,11 @@ xml_dir = os.path.join(base_dir, 'VOC2007_text_detection/Annotations')
 kaggle_root = 'E:/programming/share/python'
 IS_KAGGLE = 'KAGGLE_KERNEL_RUN_TYPE' in os.environ
 if IS_KAGGLE:
-    icdar15_img_dir = '/kaggle/input/icdar2015/ch4_training_images'
-    icdar15_gt_dir = '/kaggle/input/icdar2015/ch4_training_localization_transcription_gt'
+    icdar15_img_dir = '/kaggle/input/datasets/hafizshehbazali/icdar2015/ch4_training_images'
+    icdar15_gt_dir = '/kaggle/input/datasets/hafizshehbazali/icdar2015/ch4_training_localization_transcription_gt'
 else:
-    icdar15_img_dir = kaggle_root+'/kaggle/input/datasets/hafizshehbazali/icdar2015/ch4_training_images'
-    icdar15_gt_dir = kaggle_root+'/kaggle/input/datasets/hafizshehbazali/icdar2015/ch4_training_localization_transcription_gt'
+    icdar15_img_dir = kaggle_root+'/kaggle/input/icdar2015/ch4_training_images'
+    icdar15_gt_dir = kaggle_root+'/kaggle/input/icdar2015/ch4_training_localization_transcription_gt'
 print(icdar15_gt_dir,icdar15_gt_dir)
 num_workers = 2
 pretrained_weights = '/kaggle/input/datasets/pretriained-ctpn'
