@@ -57,7 +57,7 @@ if __name__ == '__main__':
     dataset = ICDARDataset(config.icdar15_img_dir, config.icdar15_gt_dir)
     dataloader = DataLoader(
         dataset,
-        batch_size=1,
+        batch_size=config.batch_size,
         shuffle=True,
         num_workers=config.num_workers,
         pin_memory=config.pin_memory if hasattr(config, 'pin_memory') else False
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     for epoch in range(resume_epoch+1, epochs):
         print(f'Epoch {epoch}/{epochs}')
         print('#'*50)
-        epoch_size = len(dataset) // 1
+        epoch_size = len(dataset) // config.batch_size
         model.train()
         epoch_loss_cls = 0
         epoch_loss_regr = 0
