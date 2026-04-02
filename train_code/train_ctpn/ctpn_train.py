@@ -6,6 +6,7 @@
 #'''
 import os
 import torch
+import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch import optim
 import numpy as np
@@ -61,20 +62,24 @@ if __name__ == '__main__':
         num_workers=config.num_workers,
         pin_memory=config.pin_memory if hasattr(config, 'pin_memory') else False
     )
-    model = CTPN_Model()
-    model.to(device)
     
-    # 多GPU支持
+    model = CTPN_Model()
+    # 【新增】使用多GPU
     if torch.cuda.device_count() > 1:
-        print(f"使用 {torch.cuda.device_count()} 个GPU并行训练")
-        model = torch.nn.DataParallel(model)
+        print(f"发现 {torch.cuda.device_count()} 个GPU，使用DataParallel并行训练")
+        model = nn.DataParallel(model)
+    model = model.to(device)
+    
     
     # 加载预训练权重
     if os.path.exists(checkpoints_weight):
         print('using pretrained weight: {}'.format(checkpoints_weight))
         cc = torch.load(checkpoints_weight, map_location=device)
-        model.load_state_dict(cc['model_state_dict'])
-        resume_epoch = cc['epoch']
+        if isinstance(model, nn.DataParallel):
+            model.module.load_state_dict(cc['model_state_dict'])
+        else:
+            model.load_state_dict(cc['model_state_dict'])
+            resume_epoch = cc['epoch']
     else:
         model.apply(weights_init)
 
@@ -137,7 +142,12 @@ if __name__ == '__main__':
             best_loss_regr = epoch_loss_regr
             best_loss_cls = epoch_loss_cls
             best_model = model
-            save_checkpoint({'model_state_dict': best_model.state_dict(),
+            # 根据是否使用DataParallel，选择正确的state_dict
+            if isinstance(best_model, nn.DataParallel):
+                state_dict = best_model.module.state_dict()
+            else:
+                state_dict = best_model.state_dict()
+            save_checkpoint({'model_state_dict': state_dict,
                              'epoch': epoch},
                             epoch,
                             best_loss_cls,
