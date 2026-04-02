@@ -5,6 +5,7 @@
 # @Author: Greg Gao(laygin)
 #'''
 import os
+import torch
 
 # base_dir = 'path to dataset base dir'
 base_dir = './images'
@@ -21,9 +22,29 @@ else:
     icdar15_img_dir = kaggle_root+'/kaggle/input/icdar2015/ch4_training_images'
     icdar15_gt_dir = kaggle_root+'/kaggle/input/icdar2015/ch4_training_localization_transcription_gt'
 print(icdar15_gt_dir,icdar15_gt_dir)
-num_workers = 2
-pretrained_weights = '/kaggle/input/datasets/pretriained-ctpn'
+num_workers = 4
 
+# ========== 【GPU优化部分】==========
+# 设备自动检测
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(f"使用设备: {device}")
+# 根据设备调整参数
+if torch.cuda.is_available():
+    # GPU环境：可以增大batch size和worker数量
+    batch_size = 32  # 根据你的GPU显存调整，原来可能是16
+    num_workers = 4  # 增加数据加载线程
+    pin_memory = True  # 加速CPU到GPU传输
+    print(f"GPU: {torch.cuda.get_device_name()}")
+    print(f"显存: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
+else:
+    # CPU环境：保持原有配置
+    batch_size = 16  # 原来的batch size
+    num_workers = 2
+    pin_memory = False
+    print("未检测到GPU, 使用CPU进行训练")
+
+# ========== 【模型训练参数】==========
+pretrained_weights = '/kaggle/input/datasets/pretriained-ctpn'
 anchor_scale = 16
 IOU_NEGATIVE = 0.3
 IOU_POSITIVE = 0.7
@@ -37,8 +58,8 @@ IMAGE_MEAN = [123.68, 116.779, 103.939]
 OHEM = True
 
 # 修改为Kaggle的working目录，并确保路径使用正斜杠
-checkpoints_dir = '/kaggle/working/checkpoints'
-outputs = '/kaggle/working/logs'
+checkpoints_dir = kaggle_root + '/kaggle/working/checkpoints'
+outputs = kaggle_root + '/kaggle/working/logs'
 
 # 自动创建必要的目录
 os.makedirs(checkpoints_dir, exist_ok=True)

@@ -5,7 +5,6 @@
 # @Author: Greg Gao(laygin)
 #'''
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 import torch
 from torch.utils.data import DataLoader
 from torch import optim
@@ -48,17 +47,29 @@ def weights_init(m):
 
 
 if __name__ == '__main__':
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = config.device
     checkpoints_weight = config.pretrained_weights
     print('exist pretrained ',os.path.exists(checkpoints_weight))
     if os.path.exists(checkpoints_weight):
         pretrained = False
 
     dataset = ICDARDataset(config.icdar15_img_dir, config.icdar15_gt_dir)
-    dataloader = DataLoader(dataset, batch_size=1, shuffle=True, num_workers=config.num_workers)
+    dataloader = DataLoader(
+        dataset,
+        batch_size=1,
+        shuffle=True,
+        num_workers=config.num_workers,
+        pin_memory=config.pin_memory if hasattr(config, 'pin_memory') else False
+    )
     model = CTPN_Model()
     model.to(device)
     
+    # 多GPU支持
+    if torch.cuda.device_count() > 1:
+        print(f"使用 {torch.cuda.device_count()} 个GPU并行训练")
+        model = torch.nn.DataParallel(model)
+    
+    # 加载预训练权重
     if os.path.exists(checkpoints_weight):
         print('using pretrained weight: {}'.format(checkpoints_weight))
         cc = torch.load(checkpoints_weight, map_location=device)
