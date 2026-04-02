@@ -31,7 +31,7 @@ print(f"使用设备: {device}")
 # 根据设备调整参数
 if torch.cuda.is_available():
     # GPU环境：可以增大batch size和worker数量
-    batch_size = 8  # 根据你的GPU显存调整，原来可能是16
+    batch_size = 16  # 根据你的GPU显存调整，原来可能是16
     num_workers = 4  # 增加数据加载线程
     pin_memory = True  # 加速CPU到GPU传输
     print(f"GPU: {torch.cuda.get_device_name()}")
@@ -58,8 +58,13 @@ IMAGE_MEAN = [123.68, 116.779, 103.939]
 OHEM = True
 
 # 修改为Kaggle的working目录，并确保路径使用正斜杠
-checkpoints_dir = kaggle_root + '/kaggle/working/checkpoints'
-outputs = kaggle_root + '/kaggle/working/logs'
+# 路径配置
+if IS_KAGGLE:
+    checkpoints_dir = '/kaggle/working/checkpoints'
+    outputs = '/kaggle/working/logs'
+else:
+    checkpoints_dir = kaggle_root + '/kaggle/working/checkpoints'
+    outputs = kaggle_root + '/kaggle/working/logs'
 
 # 自动创建必要的目录
 os.makedirs(checkpoints_dir, exist_ok=True)
