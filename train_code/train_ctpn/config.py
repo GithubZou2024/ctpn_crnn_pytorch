@@ -44,7 +44,10 @@ else:
     print("未检测到GPU, 使用CPU进行训练")
 
 # ========== 【模型训练参数】==========
-pretrained_weights = kaggle_root+'/kaggle/input/datasets/pretriained-ctpn'
+if IS_KAGGLE:
+    pretrained_weights = '/kaggle/input/datasets/zouhahaha/pretrained-ctpn/CTPN.pth'
+else:
+    pretrained_weights = kaggle_root + '/kaggle/input/datasets/pretriained-ctpn/CTPN.pth'
 anchor_scale = 16
 IOU_NEGATIVE = 0.3
 IOU_POSITIVE = 0.7
