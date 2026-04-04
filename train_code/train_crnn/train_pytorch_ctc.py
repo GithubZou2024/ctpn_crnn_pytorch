@@ -46,6 +46,9 @@ if config.experiment is None:
 if not os.path.exists(config.experiment):
     os.mkdir(config.experiment)
 
+print(f"训练集 infofile: {config.train_infofile}")
+print(f"验证集 infofile: {config.val_infofile}")
+
 config.manualSeed = random.randint(1, 10000)  # fix seed
 print("Random Seed: ", config.manualSeed)
 random.seed(config.manualSeed)
@@ -97,13 +100,13 @@ print(crnn)
 # text = torch.IntTensor(config.batchSize * 5)
 # length = torch.IntTensor(config.batchSize)
 if config.cuda:
-    crnn = crnn.to(config.device)
-    # 双GPU配置
+    # 先包装 DataParallel，再移动到 device
     if torch.cuda.device_count() > 1:
         print(f"使用 {torch.cuda.device_count()} 个GPU进行训练")
         crnn = torch.nn.DataParallel(crnn)
+    crnn = crnn.to(config.device)
     criterion = criterion.to(config.device)
-
+    
 # image = Variable(image)
 # text = Variable(text)
 # length = Variable(length)
@@ -149,7 +152,7 @@ def val(net, dataset, criterion, max_iter=100):
         torch.save(net.state_dict(), '{}/{}.pth'.format(config.saved_model_dir, config.saved_model_prefix))
 
 
-def trainBatch(net, criterion, optimizer):
+def trainBatch(net, criterion, optimizer, train_iter):
     data = next(train_iter)
     cpu_images, cpu_texts = data
     batch_size = cpu_images.size(0)
@@ -181,7 +184,7 @@ for epoch in range(config.niter):
         for p in crnn.parameters():
             p.requires_grad = True
         crnn.train()
-        cost = trainBatch(crnn, criterion, optimizer)
+        cost = trainBatch(crnn, criterion, optimizer, train_iter)
         print('epoch: {} iter: {}/{} Train loss: {:.3f}'.format(epoch, i, n_batch, cost.item()))
         loss_avg.add(cost)
         loss_avg.add(cost)
@@ -193,5 +196,3 @@ for epoch in range(config.niter):
             f.write('train_loss:{}\n'.format(loss_avg.val()))
 
     val(crnn, test_dataset, criterion)
-
-
