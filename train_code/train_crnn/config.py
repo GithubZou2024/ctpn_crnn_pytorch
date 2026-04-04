@@ -15,9 +15,9 @@ def get_path(path):
 
 cuda = True
 device = torch.device('cuda' if cuda and torch.cuda.is_available() else 'cpu')
-train_infofile = get_path('data_set/infofile_train_10w.txt')
+train_infofile = get_path('/kaggle/input/recognition/ch4_training_word_images_gt/ch4_training_word_images_gt.txt')
 train_infofile_fullimg = get_path('')
-val_infofile = get_path('data_set/infofile_test.txt')
+val_infofile = get_path('/kaggle/input/recognition/ch4_test_word_images_gt/ch4_test_word_images_gt.txt')
 alphabet = keys.alphabet
 alphabet_v2 = keys.alphabet_v2
 workers = 4
@@ -33,6 +33,9 @@ beta1 = 0.5
 ngpu = 2
 pretrained_model = get_path('/kaggle/input/pretrained_CRNN/CRNN.pth')
 saved_model_dir = get_path('crnn_models')
+if saved_model_dir and not os.path.exists(saved_model_dir):
+    os.makedirs(saved_model_dir, exist_ok=True)
+    print(f"创建目录: {saved_model_dir}")
 saved_model_prefix = 'CRNN-'
 use_log = False
 remove_blank = False
@@ -46,4 +49,3 @@ adam = False
 adadelta = False
 keep_ratio = False
 random_sample = True
-
