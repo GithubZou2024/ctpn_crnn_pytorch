@@ -14,23 +14,24 @@ import mydataset
 import crnn as crnn
 import config
 from online_test import val_model
-config.imgW = 800
-config.alphabet = config.alphabet_v2
-config.nclass = len(config.alphabet) + 1
-config.saved_model_prefix = 'CRNN-1010'
-config.train_infofile = ['path_to_train_infofile1.txt','path_to_train_infofile2.txt']
-config.val_infofile = 'path_to_test_infofile.txt'
-config.keep_ratio = True
-config.use_log = True
-config.pretrained_model = 'path_to_your_pretrained_model.pth'
-config.batchSize = 80
-config.workers = 10
-config.adam = True
+import config
+# config.imgW = 800
+# config.alphabet = config.alphabet_v2
+# config.nclass = len(config.alphabet) + 1
+# config.saved_model_prefix = 'CRNN-1010'
+# config.train_infofile = ['path_to_train_infofile1.txt','path_to_train_infofile2.txt']
+# config.val_infofile = 'path_to_test_infofile.txt'
+# config.keep_ratio = True
+# config.use_log = True
+# config.pretrained_model = 'path_to_your_pretrained_model.pth'
+# config.batchSize = 80
+# config.workers = 10
+# config.adam = True
 # config.lr = 0.00003
 import os
 import datetime
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 log_filename = os.path.join('log/','loss_acc-'+config.saved_model_prefix + '.log')
 if not os.path.exists('debug_files'):
     os.mkdir('debug_files')
@@ -95,13 +96,13 @@ print(crnn)
 # image = torch.FloatTensor(config.batchSize, 3, config.imgH, config.imgH)
 # text = torch.IntTensor(config.batchSize * 5)
 # length = torch.IntTensor(config.batchSize)
-device = torch.device('cpu')
 if config.cuda:
-    crnn.cuda()
-    # crnn = torch.nn.DataParallel(crnn, device_ids=range(opt.ngpu))
-    # image = image.cuda()
-    device = torch.device('cuda:0')
-    criterion = criterion.cuda()
+    crnn = crnn.to(config.device)
+    # 双GPU配置
+    if torch.cuda.device_count() > 1:
+        print(f"使用 {torch.cuda.device_count()} 个GPU进行训练")
+        crnn = torch.nn.DataParallel(crnn)
+    criterion = criterion.to(config.device)
 
 # image = Variable(image)
 # text = Variable(text)
@@ -124,26 +125,35 @@ def val(net, dataset, criterion, max_iter=100):
     for p in net.parameters():
         p.requires_grad = False
 
-    num_correct,  num_all = val_model(config.val_infofile,net,True,log_file='compare-'+config.saved_model_prefix+'.log')
+    num_correct, num_all = val_model(config.val_infofile, net, True, log_file='compare-' + config.saved_model_prefix + '.log')
     accuracy = num_correct / num_all
 
     print('ocr_acc: %f' % (accuracy))
     if config.use_log:
         with open(log_filename, 'a') as f:
             f.write('ocr_acc:{}\n'.format(accuracy))
-    global best_acc
+    
+    global best_acc, epoch
     if accuracy > best_acc:
         best_acc = accuracy
-        torch.save(crnn.state_dict(), '{}/{}_{}_{}.pth'.format(config.saved_model_dir, config.saved_model_prefix, epoch,
-                                                               int(best_acc * 1000)))
-    torch.save(crnn.state_dict(), '{}/{}.pth'.format(config.saved_model_dir, config.saved_model_prefix))
+        # 修改这一行：判断是否有 module 前缀
+        if hasattr(net, 'module'):
+            torch.save(net.module.state_dict(), '{}/{}_{}_{}.pth'.format(config.saved_model_dir, config.saved_model_prefix, epoch, int(best_acc * 1000)))
+        else:
+            torch.save(net.state_dict(), '{}/{}_{}_{}.pth'.format(config.saved_model_dir, config.saved_model_prefix, epoch, int(best_acc * 1000)))
+    
+    # 修改这一行：保存最新模型
+    if hasattr(net, 'module'):
+        torch.save(net.module.state_dict(), '{}/{}.pth'.format(config.saved_model_dir, config.saved_model_prefix))
+    else:
+        torch.save(net.state_dict(), '{}/{}.pth'.format(config.saved_model_dir, config.saved_model_prefix))
 
 
 def trainBatch(net, criterion, optimizer):
     data = train_iter.next()
     cpu_images, cpu_texts = data
     batch_size = cpu_images.size(0)
-    image = cpu_images.to(device)
+    image = cpu_images.to(config.device)
 
     text, length = converter.encode(cpu_texts)
     # utils.loadData(text, t)

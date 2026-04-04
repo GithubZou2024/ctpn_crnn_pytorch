@@ -1,24 +1,38 @@
 import keys
+import os
+import torch
 
-train_infofile = 'data_set/infofile_train_10w.txt'
-train_infofile_fullimg = ''
-val_infofile = 'data_set/infofile_test.txt'
+IS_KAGGLE = 'KAGGLE_KERNEL_RUN_TYPE' in os.environ
+KAGGLE_ROOT = r"E:\programming\share\python"
+
+def get_path(path):
+    if IS_KAGGLE:
+        return path
+    else:
+        # 确保路径分隔符正确
+        full_path = os.path.join(KAGGLE_ROOT, path)
+        return full_path.replace('/', os.sep).replace('\\', os.sep)
+
+cuda = True
+device = torch.device('cuda' if cuda and torch.cuda.is_available() else 'cpu')
+train_infofile = get_path('data_set/infofile_train_10w.txt')
+train_infofile_fullimg = get_path('')
+val_infofile = get_path('data_set/infofile_test.txt')
 alphabet = keys.alphabet
 alphabet_v2 = keys.alphabet_v2
 workers = 4
-batchSize = 50
+batchSize = 100
 imgH = 32
 imgW = 280
 nc = 1
 nclass = len(alphabet)+1
 nh = 256
 niter = 100
-lr = 0.0003
+lr = 0.0006
 beta1 = 0.5
-cuda = True
-ngpu = 1
-pretrained_model = ''
-saved_model_dir = 'crnn_models'
+ngpu = 2
+pretrained_model = get_path('/kaggle/input/pretrained_CRNN/CRNN.pth')
+saved_model_dir = get_path('crnn_models')
 saved_model_prefix = 'CRNN-'
 use_log = False
 remove_blank = False
