@@ -15,9 +15,11 @@ def get_path(path):
 
 cuda = True
 device = torch.device('cuda' if cuda and torch.cuda.is_available() else 'cpu')
-train_infofile = get_path('/kaggle/input/recognition/ch4_training_word_images_gt/ch4_training_word_images_gt.txt')
+train_infofile = get_path('/kaggle/input/datasets/zouhahaha/ \
+    recognition/ch4_training_word_images_gt/ch4_training_word_images_gt.txt')
 train_infofile_fullimg = get_path('')
-val_infofile = get_path('/kaggle/input/recognition/ch4_test_word_images_gt/ch4_test_word_images_gt.txt')
+val_infofile = get_path('/kaggle/input/datasets/zouhahaha/ \
+    recognition/ch4_test_word_images_gt/ch4_test_word_images_gt.txt')
 alphabet = keys.alphabet
 alphabet_v2 = keys.alphabet_v2
 workers = 4
