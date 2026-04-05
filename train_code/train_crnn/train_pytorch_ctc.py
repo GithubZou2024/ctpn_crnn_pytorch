@@ -62,6 +62,45 @@ if not config.random_sample:
     sampler = mydataset.randomSequentialSampler(train_dataset, config.batchSize)
 else:
     sampler = None
+####################
+import os
+
+# 1. 打印当前工作目录
+print(f"当前工作目录: {os.getcwd()}")
+
+# 2. 打印 infofile 第一行和文件是否存在
+with open(config.train_infofile, 'r') as f:
+    first_line = f.readline().strip()
+    print(f"infofile 第一行: {first_line}")
+    
+    # 解析出图片路径
+    if '\\t' in first_line:
+        img_path = first_line.split('\\t')[0]
+    else:
+        img_path = first_line
+    
+    print(f"图片路径: {img_path}")
+    print(f"文件是否存在: {os.path.exists(img_path)}")
+    
+    # 如果不存在，尝试在常见目录查找
+    if not os.path.exists(img_path):
+        img_name = os.path.basename(img_path)
+        print(f"尝试查找文件: {img_name}")
+        
+        # 在图片目录查找
+        img_dir = "/kaggle/input/datasets/zouhahaha/recognition/ch4_training_word_images_gt"
+        full_path = os.path.join(img_dir, img_name)
+        print(f"完整路径: {full_path}")
+        print(f"是否存在: {os.path.exists(full_path)}")
+
+# 3. 列出图片目录的前几个文件
+img_dir = config.get_path(r"\kaggle\working\ctpn_crnn_pytorch\train_code\train_crnn\alphabet.pkl")
+print(f"\n图片目录前5个文件:")
+for i, f in enumerate(os.listdir(img_dir)):
+    if i >= 5:
+        break
+    print(f"  {f}")
+####################
 train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=config.batchSize,
     shuffle=True, sampler=sampler,
