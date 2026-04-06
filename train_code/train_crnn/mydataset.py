@@ -217,6 +217,12 @@ class MyDatasetPro(Dataset):
                     fname,label = line.split('g:')
                     fname += 'g'
                     label = label.replace('\r','').replace('\n','')
+                    
+                    # 在 MyDataset.__init__ 中
+                    if '´' in label:
+                        skipped += 1
+                        continue  # 跳过这个样本
+
                     self.files.append(fname)
                     self.labels.append(label)
                     
@@ -227,6 +233,12 @@ class MyDatasetPro(Dataset):
                 content = f.readlines()
                 for line in content:
                     fname,label,left, top, right, bottom = line.strip().split('\t')
+                    
+                    # 在 MyDataset.__init__ 中
+                    if '´' in label:
+                        skipped += 1
+                        continue  # 跳过这个样本
+                    
                     self.files.append(fname)
                     self.labels.append(label)
                     self.locs.append([int(left),int(top),int(right),int(bottom)])
