@@ -15,7 +15,7 @@ alphabet = keys.alphabet_v2
 converter = utils.strLabelConverter(alphabet.copy())
 
 
-def val_model(infofile,model,gpu,log_file = '0625.log'):
+def val_model(infofile,model,gpu,log_file = '0406.log'):
     log_path = os.path.join(config.log_dir, log_file)
     h = open(log_path, 'w')
     with open(infofile) as f:
@@ -30,6 +30,7 @@ def val_model(infofile,model,gpu,log_file = '0625.log'):
                 fname, label = line.split('g:')
                 fname += 'g'
             label = label.replace('\r', '').replace('\n', '')
+            label = label.strip("'").strip('"').strip()
             img = cv2.imread(fname)
             res = val_on_image(img,model,gpu)
             res = res.strip()
