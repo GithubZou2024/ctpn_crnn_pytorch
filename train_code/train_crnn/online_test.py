@@ -18,6 +18,11 @@ converter = utils.strLabelConverter(alphabet.copy())
 def val_model(infofile,model,gpu,log_file = '0406.log'):
     log_path = os.path.join(config.log_dir, log_file)
     h = open(log_path, 'w')
+    test_dataset = mydataset.MyDataset(
+        info_filename=infofile, 
+        transform=mydataset.resizeNormalize((config.imgW, config.imgH), is_test=True)
+    )
+    
     with open(infofile) as f:
         content = f.readlines()
         num_all = 0
@@ -61,7 +66,7 @@ def val_on_image(img,model,gpu):
     image = transformer( image )
     if gpu:
         image = image.cuda()
-    image = image.view( 1, *image.size() )
+    image = image.view( 1, *image.size())
     image = Variable( image )
 
     model.eval()
@@ -72,7 +77,6 @@ def val_on_image(img,model,gpu):
     preds_size = Variable(torch.IntTensor([preds.size(0)]))
     
     # 添加调试：打印原始预测索引
-    
     # 先用 raw=True 看看原始解码结果
     raw_pred = converter.decode(preds.data, preds_size.data, raw=True)
     print(f"Raw 解码结果: '{raw_pred}'")

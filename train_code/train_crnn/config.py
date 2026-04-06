@@ -28,7 +28,7 @@ train_infofile_fullimg = None  # 如果没有就设为None
 val_infofile = get_path('/kaggle/input/datasets/zouhahaha/recognition/ch4_test_word_images_gt/ch4_test_word_images_gt.txt')
 
 # 预训练模型路径 - get_path会自动处理Kaggle和本地的路径映射
-# /kaggle/input/datasets/zouhahaha/pretrained-crnn/CRNN.pth
+# /kaggle/input/datasets/zouhahaha/pretrained-crnn/CRNN-1010.pth
 pretrained_model = get_path('/kaggle/input/datasets/zouhahaha/pretrained-crnn/CRNN-1010.pth')
 
 # 字母表配置
@@ -44,7 +44,7 @@ nh = 256
 
 # 训练参数
 niter = 100
-lr = 0.00005
+lr = 0.0005
 beta1 = 0.5
 
 # 保存目录

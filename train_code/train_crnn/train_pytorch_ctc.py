@@ -14,11 +14,23 @@ import mydataset
 import crnn as crnn
 import config
 from online_test import val_model
-import config
+config.imgW = 800
+config.alphabet = config.alphabet_v2
+config.nclass = len(config.alphabet) + 1
+config.saved_model_prefix = 'CRNN-1010'
+config.train_infofile = ['path_to_train_infofile1.txt','path_to_train_infofile2.txt']
+config.val_infofile = 'path_to_test_infofile.txt'
+config.keep_ratio = True
+config.use_log = True
+config.pretrained_model = 'path_to_your_pretrained_model.pth'
+config.batchSize = 80
+config.workers = 10
+config.adam = True
+# config.lr = 0.00003
 import os
 import datetime
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 log_filename = os.path.join('log/','loss_acc-'+config.saved_model_prefix + '.log')
 if not os.path.exists('debug_files'):
     os.mkdir('debug_files')
@@ -33,9 +45,6 @@ if config.experiment is None:
 if not os.path.exists(config.experiment):
     os.mkdir(config.experiment)
 
-print(f"训练集 infofile: {config.train_infofile}")
-print(f"验证集 infofile: {config.val_infofile}")
-
 config.manualSeed = random.randint(1, 10000)  # fix seed
 print("Random Seed: ", config.manualSeed)
 random.seed(config.manualSeed)
@@ -49,39 +58,6 @@ if not config.random_sample:
     sampler = mydataset.randomSequentialSampler(train_dataset, config.batchSize)
 else:
     sampler = None
-####################
-import os
-
-# 1. 打印当前工作目录
-print(f"当前工作目录: {os.getcwd()}")
-
-# 2. 打印 infofile 第一行和文件是否存在
-with open(config.train_infofile, 'r', encoding='utf-8') as f:
-    first_line = f.readline().strip()
-    print(f"infofile 第一行: {first_line}")
-    
-    # 解析出图片路径（只取第一部分，不含标签）
-    if '\t' in first_line:
-        img_path = first_line.split('\t')[0].strip()
-    else:
-        img_path = first_line.strip()
-    
-    # 直接用 get_path 转换路径
-    full_path = config.get_path(img_path)
-    print(f"完整路径: {full_path}")
-    print(f"文件是否存在: {os.path.exists(full_path)}")
-
-# 3. 列出图片目录的前几个文件（修正：应该用目录路径，不是文件路径）
-img_dir_path = config.get_path("/kaggle/input/datasets/zouhahaha/recognition/ch4_training_word_images_gt")  # 或其他正确的图片目录
-print(f"\n图片目录前5个文件:")
-if os.path.exists(img_dir_path) and os.path.isdir(img_dir_path):
-    for i, f in enumerate(os.listdir(img_dir_path)):
-        if i >= 5:
-            break
-        print(f"  {f}")
-else:
-    print(f"  目录不存在或不是目录: {img_dir_path}")
-####################
 train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=config.batchSize,
     shuffle=True, sampler=sampler,
@@ -108,7 +84,6 @@ def weights_init(m):
 
 
 crnn = crnn.CRNN(config.imgH, config.nc, config.nclass, config.nh)
-print(f"DEBUG: type = {type(config.pretrained_model)},{config.pretrained_model}")
 if config.pretrained_model!='' and os.path.exists(config.pretrained_model):
     print('loading pretrained model from %s' % config.pretrained_model)
     crnn.load_state_dict(torch.load(config.pretrained_model))
@@ -120,14 +95,14 @@ print(crnn)
 # image = torch.FloatTensor(config.batchSize, 3, config.imgH, config.imgH)
 # text = torch.IntTensor(config.batchSize * 5)
 # length = torch.IntTensor(config.batchSize)
+device = torch.device('cpu')
 if config.cuda:
-    # 先包装 DataParallel，再移动到 device
-    if torch.cuda.device_count() > 1:
-        print(f"使用 {torch.cuda.device_count()} 个GPU进行训练")
-        crnn = torch.nn.DataParallel(crnn,dim=1)
-    crnn = crnn.to(config.device)
-    criterion = criterion.to(config.device)
-    
+    crnn.cuda()
+    # crnn = torch.nn.DataParallel(crnn, device_ids=range(opt.ngpu))
+    # image = image.cuda()
+    device = torch.device('cuda:0')
+    criterion = criterion.cuda()
+
 # image = Variable(image)
 # text = Variable(text)
 # length = Variable(length)
@@ -149,75 +124,40 @@ def val(net, dataset, criterion, max_iter=100):
     for p in net.parameters():
         p.requires_grad = False
 
-    num_correct, num_all = val_model(config.val_infofile, net, True, log_file='compare-' + config.saved_model_prefix + '.log')
+    num_correct,  num_all = val_model(config.val_infofile,net,True,log_file='compare-'+config.saved_model_prefix+'.log')
     accuracy = num_correct / num_all
 
     print('ocr_acc: %f' % (accuracy))
     if config.use_log:
         with open(log_filename, 'a') as f:
             f.write('ocr_acc:{}\n'.format(accuracy))
-    
-    global best_acc, epoch
+    global best_acc
     if accuracy > best_acc:
         best_acc = accuracy
-        # 修改这一行：判断是否有 module 前缀
-        if hasattr(net, 'module'):
-            torch.save(net.module.state_dict(), '{}/{}_{}_{}.pth'.format(config.saved_model_dir, config.saved_model_prefix, epoch, int(best_acc * 1000)))
-        else:
-            torch.save(net.state_dict(), '{}/{}_{}_{}.pth'.format(config.saved_model_dir, config.saved_model_prefix, epoch, int(best_acc * 1000)))
-    
-    # 修改这一行：保存最新模型
-    if hasattr(net, 'module'):
-        torch.save(net.module.state_dict(), '{}/{}.pth'.format(config.saved_model_dir, config.saved_model_prefix))
-    else:
-        torch.save(net.state_dict(), '{}/{}.pth'.format(config.saved_model_dir, config.saved_model_prefix))
+        torch.save(crnn.state_dict(), '{}/{}_{}_{}.pth'.format(config.saved_model_dir, config.saved_model_prefix, epoch,
+                                                               int(best_acc * 1000)))
+    torch.save(crnn.state_dict(), '{}/{}.pth'.format(config.saved_model_dir, config.saved_model_prefix))
 
 
-def trainBatch(net, criterion, optimizer, train_iter):
-    data = next(train_iter)
+def trainBatch(net, criterion, optimizer):
+    data = train_iter.next()
     cpu_images, cpu_texts = data
     batch_size = cpu_images.size(0)
-    image = cpu_images.to(config.device)
-    
+    image = cpu_images.to(device)
+
     text, length = converter.encode(cpu_texts)
-    
-    # 🔍 完整调试
-    # print(f"\n=== 详细调试 ===")
-    # print(f"batch_size: {batch_size}")
-    # print(f"type(text): {type(text)}")
-    # print(f"text.shape: {text.shape if hasattr(text, 'shape') else 'no shape'}")
-    # print(f"text.dtype: {text.dtype if hasattr(text, 'dtype') else 'no dtype'}")
-    # print(f"type(length): {type(length)}")
-    # print(f"length.shape: {length.shape if hasattr(length, 'shape') else 'no shape'}")
-    # print(f"length.dtype: {length.dtype if hasattr(length, 'dtype') else 'no dtype'}")
-    # print(f"length: {length}")
-    
-    preds = net(image)
-    # print(f"DataParallel 返回的 preds 形状: {preds.shape}")
-    # print(f"当前 GPU 数量: {torch.cuda.device_count()}")
-    # print(f"输入 batch_size: {batch_size}")
-    
-    seq_length = preds.size(0)
-    preds_size = torch.full((batch_size,), seq_length, dtype=torch.long)
-    # print(f"preds_size.shape: {preds_size.shape}")
-    
-    log_probs = preds.log_softmax(2).cpu()
-    # print(f"log_probs.shape: {log_probs.shape}")
-    
-    # 逐个参数检查
-    # print("\n检查 criterion 参数:")
-    # print(f"  log_probs: {log_probs.shape}, {log_probs.dtype}, device={log_probs.device}")
-    # print(f"  text: {text.shape}, {text.dtype}, device={text.device}")
-    # print(f"  preds_size: {preds_size.shape}, {preds_size.dtype}, device={preds_size.device}")
-    # print(f"  length: {length.shape}, {length.dtype}, device={length.device}")
-    
-    cost = criterion(log_probs, text.cpu(), preds_size.cpu(), length.cpu()) / batch_size
-    
-    if not torch.isnan(cost):
-        optimizer.zero_grad()
+    # utils.loadData(text, t)
+    # utils.loadData(length, l)
+
+    preds = net(image)  # seqLength x batchSize x alphabet_size
+    preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))  # seqLength x batchSize
+    cost = criterion(preds.log_softmax(2).cpu(), text, preds_size, length) / batch_size
+    if torch.isnan(cost):
+        print(batch_size,cpu_texts)
+    else:
+        net.zero_grad()
         cost.backward()
         optimizer.step()
-    
     return cost
 
 
@@ -231,8 +171,9 @@ for epoch in range(config.niter):
         for p in crnn.parameters():
             p.requires_grad = True
         crnn.train()
-        cost = trainBatch(crnn, criterion, optimizer, train_iter)
+        cost = trainBatch(crnn, criterion, optimizer)
         print('epoch: {} iter: {}/{} Train loss: {:.3f}'.format(epoch, i, n_batch, cost.item()))
+        loss_avg.add(cost)
         loss_avg.add(cost)
         i += 1
     print('Train loss: %f' % (loss_avg.val()))
@@ -242,3 +183,5 @@ for epoch in range(config.niter):
             f.write('train_loss:{}\n'.format(loss_avg.val()))
 
     val(crnn, test_dataset, criterion)
+
+

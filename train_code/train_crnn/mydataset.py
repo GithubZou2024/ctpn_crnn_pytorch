@@ -10,7 +10,6 @@ from PIL import Image,ImageEnhance,ImageOps
 import numpy as np
 import codecs
 import trans
-import config
 
 debug_idx = 0
 debug = True
@@ -153,7 +152,6 @@ class MyDataset(Dataset):
         self.train = train
         self.files = list()
         self.labels = list()
-        skipped = 0
         for info_name in self.info_filename:
             with open(info_name) as f:
                 content = f.readlines()
@@ -170,13 +168,8 @@ class MyDataset(Dataset):
                         label = label.strip()
                     else:
                         label = ' '+label.strip()+' '
-                    # 在 MyDataset.__init__ 中
-                    if '´' in label or 'É' in label:
-                        skipped += 1
-                        continue  # 跳过这个样本
-                    self.files.append(config.get_path(fname))
+                    self.files.append(fname)
                     self.labels.append(label)
-
 
     def name(self):
         return 'MyDataset'
@@ -215,7 +208,6 @@ class MyDatasetPro(Dataset):
         self.files = list()
         self.labels = list()
         self.locs = list()
-        
         for info_name in self.info_filename_txtline:
             with open(info_name) as f:
                 content = f.readlines()
@@ -225,20 +217,16 @@ class MyDatasetPro(Dataset):
                     label = label.replace('\r','').replace('\n','')
                     self.files.append(fname)
                     self.labels.append(label)
-                    
         self.txtline_len = len(self.labels)
-        
         for info_name in self.info_filename_fullimg:
             with open(info_name) as f:
                 content = f.readlines()
                 for line in content:
-                    fname,label,left, top, right, bottom = line.strip().split('\t')                    
+                    fname,label,left, top, right, bottom = line.strip().split('\t')
                     self.files.append(fname)
                     self.labels.append(label)
                     self.locs.append([int(left),int(top),int(right),int(bottom)])
-                    
         print(len(self.labels),len(self.files))
-        
     def name(self):
         return 'MyDatasetPro'
 

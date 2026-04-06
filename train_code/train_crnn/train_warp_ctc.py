@@ -7,8 +7,8 @@ import torch.optim as optim
 import torch.utils.data
 from torch.autograd import Variable
 import numpy as np
-# from warpctc_pytorch import CTCLoss
-from torch.nn import CTCLoss
+from warpctc_pytorch import CTCLoss
+# from torch.nn import CTCLoss
 import utils
 import mydataset
 import crnn as crnn
@@ -183,3 +183,5 @@ for epoch in range(config.niter):
             f.write('train_loss:{}\n'.format(loss_avg.val()))
 
     val(crnn, test_dataset, criterion)
+
+
