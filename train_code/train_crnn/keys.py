@@ -19,7 +19,7 @@ from path_utils import get_path
 # alphabet_list = sorted(list(alphabet_set))
 # pkl.dump(alphabet_list,open('alphabet.pkl','wb'))
 
-alphabet_list = pkl.load(open(get_path(r'kaggle\working\ctpn_crnn_pytorch\train_code\train_crnn\alphabet.pkl'),'rb'))
+alphabet_list = pkl.load(open(get_path('/kaggle/working/ctpn_crnn_pytorch/train_code/train_crnn/alphabet.pkl'),'rb'))
 alphabet = [ord(ch) for ch in alphabet_list]
 alphabet_v2 = alphabet
 # print(alphabet_v2)
