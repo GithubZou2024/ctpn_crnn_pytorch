@@ -6,7 +6,8 @@ import config
 from path_utils import get_path
 
 # 根据环境自动调整配置
-if config.IS_KAGGLE:# Kaggle/Linux GPU环境
+IS_KAGGLE = 'KAGGLE_KERNEL_RUN_TYPE' in os.environ
+if IS_KAGGLE:# Kaggle/Linux GPU环境
     cuda = True
     device = torch.device('cuda')
     workers = 4
