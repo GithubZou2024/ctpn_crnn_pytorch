@@ -64,15 +64,23 @@ def val_on_image(img,model,gpu):
     image = Variable( image )
 
     model.eval()
-    preds = model( image )
-
-    preds = F.log_softmax(preds,2)
-    conf, preds = preds.max( 2 )
-    preds = preds.transpose( 1, 0 ).contiguous().view( -1 )
-
-    preds_size = Variable( torch.IntTensor( [preds.size( 0 )] ) )
-    # raw_pred = converter.decode( preds.data, preds_size.data, raw=True )
-    sim_pred = converter.decode( preds.data, preds_size.data, raw=False )
+    preds = model(image)
+    preds = F.log_softmax(preds, 2)
+    conf, preds = preds.max(2)
+    preds = preds.transpose(1, 0).contiguous().view(-1)
+    preds_size = Variable(torch.IntTensor([preds.size(0)]))
+    
+    # 添加调试：打印原始预测索引
+    print(f"原始预测索引 (前20个): {preds.data[:20]}")
+    print(f"预测长度: {preds.size(0)}")
+    
+    # 先用 raw=True 看看原始解码结果
+    raw_pred = converter.decode(preds.data, preds_size.data, raw=True)
+    print(f"Raw 解码结果: '{raw_pred}'")
+    
+    sim_pred = converter.decode(preds.data, preds_size.data, raw=False)
+    print(f"Sim 解码结果: '{sim_pred}'")
+    
     return sim_pred
 
 
