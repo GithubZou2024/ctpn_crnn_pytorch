@@ -178,20 +178,29 @@ def trainBatch(net, criterion, optimizer, train_iter):
     cpu_images, cpu_texts = data
     batch_size = cpu_images.size(0)
     image = cpu_images.to(config.device)
-
+    
     text, length = converter.encode(cpu_texts)
-    # utils.loadData(text, t)
-    # utils.loadData(length, l)
-
-    preds = net(image)  # seqLength x batchSize x alphabet_size
-    preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))  # seqLength x batchSize
-    cost = criterion(preds.log_softmax(2).cpu(), text, preds_size, length) / batch_size
-    if torch.isnan(cost):
-        print(batch_size,cpu_texts)
+    
+    preds = net(image)
+    
+    # ✅ 兼容 DataParallel
+    if hasattr(preds, 'size'):
+        seq_length = preds.size(0)
     else:
-        net.zero_grad()
+        seq_length = preds[0].size(0) if isinstance(preds, tuple) else len(preds)
+    
+    preds_size = torch.full((batch_size,), seq_length, dtype=torch.long)
+    
+    # 确保 log_softmax 在 CPU 上计算
+    log_probs = preds.log_softmax(2).cpu() if hasattr(preds, 'log_softmax') else preds
+    
+    cost = criterion(log_probs, text.cpu(), preds_size.cpu(), length.cpu()) / batch_size
+    
+    if not torch.isnan(cost):
+        optimizer.zero_grad()
         cost.backward()
         optimizer.step()
+    
     return cost
 
 
@@ -207,7 +216,6 @@ for epoch in range(config.niter):
         crnn.train()
         cost = trainBatch(crnn, criterion, optimizer, train_iter)
         print('epoch: {} iter: {}/{} Train loss: {:.3f}'.format(epoch, i, n_batch, cost.item()))
-        loss_avg.add(cost)
         loss_avg.add(cost)
         i += 1
     print('Train loss: %f' % (loss_avg.val()))
