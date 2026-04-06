@@ -8,6 +8,6 @@ def get_path(path):
     if IS_KAGGLE:
         return path
     else:
-        path = path.replace('/', os.sep)
+        path = path.lstrip('/').replace('/', os.sep)
         full_path = os.path.join(LOCAL_ROOT, path)
         return full_path
