@@ -181,22 +181,33 @@ def trainBatch(net, criterion, optimizer, train_iter):
     
     text, length = converter.encode(cpu_texts)
     
-    preds = net(image)
-    
-    # ✅ 兼容 DataParallel
-    if hasattr(preds, 'size'):
-        seq_length = preds.size(0)
-    else:
-        seq_length = preds[0].size(0) if isinstance(preds, tuple) else len(preds)
-    
-    preds_size = torch.full((batch_size,), seq_length, dtype=torch.long)
+    # 🔍 完整调试
+    print(f"\n=== 详细调试 ===")
     print(f"batch_size: {batch_size}")
-    print(f"preds_size.shape: {preds_size.shape}")
-    print(f"preds_size: {preds_size}")
-    print(f"length.shape: {length.shape}")
+    print(f"type(text): {type(text)}")
+    print(f"text.shape: {text.shape if hasattr(text, 'shape') else 'no shape'}")
+    print(f"text.dtype: {text.dtype if hasattr(text, 'dtype') else 'no dtype'}")
+    print(f"type(length): {type(length)}")
+    print(f"length.shape: {length.shape if hasattr(length, 'shape') else 'no shape'}")
+    print(f"length.dtype: {length.dtype if hasattr(length, 'dtype') else 'no dtype'}")
+    print(f"length: {length}")
     
-    # 确保 log_softmax 在 CPU 上计算
-    log_probs = preds.log_softmax(2).cpu() if hasattr(preds, 'log_softmax') else preds
+    preds = net(image)
+    print(f"preds.shape: {preds.shape}")
+    
+    seq_length = preds.size(0)
+    preds_size = torch.full((batch_size,), seq_length, dtype=torch.long)
+    print(f"preds_size.shape: {preds_size.shape}")
+    
+    log_probs = preds.log_softmax(2).cpu()
+    print(f"log_probs.shape: {log_probs.shape}")
+    
+    # 逐个参数检查
+    print("\n检查 criterion 参数:")
+    print(f"  log_probs: {log_probs.shape}, {log_probs.dtype}, device={log_probs.device}")
+    print(f"  text: {text.shape}, {text.dtype}, device={text.device}")
+    print(f"  preds_size: {preds_size.shape}, {preds_size.dtype}, device={preds_size.device}")
+    print(f"  length: {length.shape}, {length.dtype}, device={length.device}")
     
     cost = criterion(log_probs, text.cpu(), preds_size.cpu(), length.cpu()) / batch_size
     
