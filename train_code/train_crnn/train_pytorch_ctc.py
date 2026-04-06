@@ -182,34 +182,34 @@ def trainBatch(net, criterion, optimizer, train_iter):
     text, length = converter.encode(cpu_texts)
     
     # 🔍 完整调试
-    print(f"\n=== 详细调试 ===")
-    print(f"batch_size: {batch_size}")
-    print(f"type(text): {type(text)}")
-    print(f"text.shape: {text.shape if hasattr(text, 'shape') else 'no shape'}")
-    print(f"text.dtype: {text.dtype if hasattr(text, 'dtype') else 'no dtype'}")
-    print(f"type(length): {type(length)}")
-    print(f"length.shape: {length.shape if hasattr(length, 'shape') else 'no shape'}")
-    print(f"length.dtype: {length.dtype if hasattr(length, 'dtype') else 'no dtype'}")
-    print(f"length: {length}")
+    # print(f"\n=== 详细调试 ===")
+    # print(f"batch_size: {batch_size}")
+    # print(f"type(text): {type(text)}")
+    # print(f"text.shape: {text.shape if hasattr(text, 'shape') else 'no shape'}")
+    # print(f"text.dtype: {text.dtype if hasattr(text, 'dtype') else 'no dtype'}")
+    # print(f"type(length): {type(length)}")
+    # print(f"length.shape: {length.shape if hasattr(length, 'shape') else 'no shape'}")
+    # print(f"length.dtype: {length.dtype if hasattr(length, 'dtype') else 'no dtype'}")
+    # print(f"length: {length}")
     
     preds = net(image)
-    print(f"DataParallel 返回的 preds 形状: {preds.shape}")
-    print(f"当前 GPU 数量: {torch.cuda.device_count()}")
-    print(f"输入 batch_size: {batch_size}")
+    # print(f"DataParallel 返回的 preds 形状: {preds.shape}")
+    # print(f"当前 GPU 数量: {torch.cuda.device_count()}")
+    # print(f"输入 batch_size: {batch_size}")
     
     seq_length = preds.size(0)
     preds_size = torch.full((batch_size,), seq_length, dtype=torch.long)
-    print(f"preds_size.shape: {preds_size.shape}")
+    # print(f"preds_size.shape: {preds_size.shape}")
     
     log_probs = preds.log_softmax(2).cpu()
-    print(f"log_probs.shape: {log_probs.shape}")
+    # print(f"log_probs.shape: {log_probs.shape}")
     
     # 逐个参数检查
-    print("\n检查 criterion 参数:")
-    print(f"  log_probs: {log_probs.shape}, {log_probs.dtype}, device={log_probs.device}")
-    print(f"  text: {text.shape}, {text.dtype}, device={text.device}")
-    print(f"  preds_size: {preds_size.shape}, {preds_size.dtype}, device={preds_size.device}")
-    print(f"  length: {length.shape}, {length.dtype}, device={length.device}")
+    # print("\n检查 criterion 参数:")
+    # print(f"  log_probs: {log_probs.shape}, {log_probs.dtype}, device={log_probs.device}")
+    # print(f"  text: {text.shape}, {text.dtype}, device={text.device}")
+    # print(f"  preds_size: {preds_size.shape}, {preds_size.dtype}, device={preds_size.device}")
+    # print(f"  length: {length.shape}, {length.dtype}, device={length.device}")
     
     cost = criterion(log_probs, text.cpu(), preds_size.cpu(), length.cpu()) / batch_size
     
