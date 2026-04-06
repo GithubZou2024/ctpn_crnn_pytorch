@@ -124,7 +124,7 @@ if config.cuda:
     # 先包装 DataParallel，再移动到 device
     if torch.cuda.device_count() > 1:
         print(f"使用 {torch.cuda.device_count()} 个GPU进行训练")
-        crnn = torch.nn.DataParallel(crnn)
+        crnn = torch.nn.DataParallel(crnn,dim=1)
     crnn = crnn.to(config.device)
     criterion = criterion.to(config.device)
     
