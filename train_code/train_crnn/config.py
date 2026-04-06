@@ -51,6 +51,11 @@ saved_model_dir = get_path('/kaggle/working/ctpn_crnn_pytorch/checkpoints')
 if saved_model_dir and not os.path.exists(saved_model_dir):
     os.makedirs(saved_model_dir, exist_ok=True)
     print(f"创建目录: {saved_model_dir}")
+# 添加 log_dir
+log_dir = get_path('/kaggle/working/ctpn_crnn_pytorch/logs')
+if log_dir and not os.path.exists(log_dir):
+    os.makedirs(log_dir, exist_ok=True)
+    print(f"创建目录: {log_dir}")
 
 saved_model_prefix = 'CRNN-'
 

@@ -6,6 +6,7 @@ from PIL import Image
 import numpy as np
 import crnn as crnn
 import cv2
+import os
 import torch.nn.functional as F
 import keys
 import config
@@ -15,7 +16,8 @@ converter = utils.strLabelConverter(alphabet.copy())
 
 
 def val_model(infofile,model,gpu,log_file = '0625.log'):
-    h = open('log/{}'.format(log_file),'w')
+    log_path = os.path.join(config.log_dir, log_file)
+    h = open(log_path, 'w')
     with open(infofile) as f:
         content = f.readlines()
         num_all = 0
