@@ -15,7 +15,7 @@ converter = utils.strLabelConverter(alphabet.copy())
 
 
 def val_model(infofile,model,gpu,log_file = '0625.log'):
-    h = open('log/{}'.format(log_file),'w')
+    h = open('/kaggle/working/ctpn_crnn_pytorch/logs/{}'.format(log_file),'w')
     with open(infofile) as f:
         content = f.readlines()
         num_all = 0
