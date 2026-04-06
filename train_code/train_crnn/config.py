@@ -29,7 +29,7 @@ val_infofile = get_path('/kaggle/input/datasets/zouhahaha/recognition/ch4_test_w
 
 # 预训练模型路径 - get_path会自动处理Kaggle和本地的路径映射
 # /kaggle/input/datasets/zouhahaha/pretrained-crnn/CRNN.pth
-pretrained_model = get_path('/kaggle/input/datasets/zouhahaha/pretrained-crnn/CRNN.pth')
+pretrained_model = get_path('/kaggle/input/datasets/zouhahaha/pretrained-crnn/CRNN-1010.pth')
 
 # 字母表配置
 alphabet = keys.alphabet
