@@ -171,7 +171,7 @@ class MyDataset(Dataset):
                     else:
                         label = ' '+label.strip()+' '
                     # 在 MyDataset.__init__ 中
-                    if '´' in label:
+                    if '´' in label or 'É' in label:
                         skipped += 1
                         continue  # 跳过这个样本
                     self.files.append(config.get_path(fname))
