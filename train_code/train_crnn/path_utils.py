@@ -1,6 +1,6 @@
 import os
 
-IS_KAGGLE = 'KAGGLE_WORKING_DIR' in os.environ
+IS_KAGGLE = 'KAGGLE_KERNEL_RUN_TYPE' in os.environ
 LOCAL_ROOT = 'E:\\programming\\share\\python'
 
 def get_path(path):
