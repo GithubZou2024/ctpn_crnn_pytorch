@@ -190,11 +190,10 @@ def trainBatch(net, criterion, optimizer, train_iter):
         seq_length = preds[0].size(0) if isinstance(preds, tuple) else len(preds)
     
     preds_size = torch.full((batch_size,), seq_length, dtype=torch.long)
-    print(f"preds 类型: {type(preds)}")
-    if hasattr(preds, 'shape'):
-        print(f"preds.shape: {preds.shape}")
-    elif isinstance(preds, (tuple, list)):
-        print(f"preds 是 {type(preds)}，长度: {len(preds)}，第一个元素形状: {preds[0].shape if hasattr(preds[0], 'shape') else 'N/A'}")
+    print(f"batch_size: {batch_size}")
+    print(f"preds_size.shape: {preds_size.shape}")
+    print(f"preds_size: {preds_size}")
+    print(f"length.shape: {length.shape}")
     
     # 确保 log_softmax 在 CPU 上计算
     log_probs = preds.log_softmax(2).cpu() if hasattr(preds, 'log_softmax') else preds
