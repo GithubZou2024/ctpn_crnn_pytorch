@@ -176,7 +176,6 @@ class MyDataset(Dataset):
                             need_skip = True
                             break
                     if need_skip:
-                        skipped_count += 1
                         print(f"跳过样本: {fname} (标签中包含 '{ch}')")
                         continue  # 跳过，不加入数据集
                     self.files.append(fname)
