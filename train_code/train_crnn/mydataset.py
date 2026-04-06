@@ -153,6 +153,7 @@ class MyDataset(Dataset):
         self.train = train
         self.files = list()
         self.labels = list()
+        skipped = 0
         for info_name in self.info_filename:
             with open(info_name) as f:
                 content = f.readlines()
@@ -169,8 +170,13 @@ class MyDataset(Dataset):
                         label = label.strip()
                     else:
                         label = ' '+label.strip()+' '
+                    # 在 MyDataset.__init__ 中
+                    if '´' in label:
+                        skipped += 1
+                        continue  # 跳过这个样本
                     self.files.append(config.get_path(fname))
                     self.labels.append(label)
+
 
     def name(self):
         return 'MyDataset'
@@ -217,12 +223,6 @@ class MyDatasetPro(Dataset):
                     fname,label = line.split('g:')
                     fname += 'g'
                     label = label.replace('\r','').replace('\n','')
-                    
-                    # 在 MyDataset.__init__ 中
-                    if '´' in label:
-                        skipped += 1
-                        continue  # 跳过这个样本
-
                     self.files.append(fname)
                     self.labels.append(label)
                     
@@ -232,13 +232,7 @@ class MyDatasetPro(Dataset):
             with open(info_name) as f:
                 content = f.readlines()
                 for line in content:
-                    fname,label,left, top, right, bottom = line.strip().split('\t')
-                    
-                    # 在 MyDataset.__init__ 中
-                    if '´' in label:
-                        skipped += 1
-                        continue  # 跳过这个样本
-                    
+                    fname,label,left, top, right, bottom = line.strip().split('\t')                    
                     self.files.append(fname)
                     self.labels.append(label)
                     self.locs.append([int(left),int(top),int(right),int(bottom)])
