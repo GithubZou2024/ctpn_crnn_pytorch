@@ -2,42 +2,28 @@ from __future__ import print_function
 import argparse
 import random
 import torch
-# import torch.backends.cudnn as cudnn
 import torch.optim as optim
 import torch.utils.data
 from torch.autograd import Variable
 import numpy as np
-# from warpctc_pytorch import CTCLoss
 from torch.nn import CTCLoss
 import utils
 import mydataset
 import crnn as crnn
 import config
 from online_test import val_model
-config.imgW = 800
-config.alphabet = config.alphabet_v2
-config.nclass = len(config.alphabet) + 1
-config.saved_model_prefix = 'CRNN-1010'
-config.train_infofile = ['path_to_train_infofile1.txt','path_to_train_infofile2.txt']
-config.val_infofile = 'path_to_test_infofile.txt'
-config.keep_ratio = True
-config.use_log = True
-config.pretrained_model = 'path_to_your_pretrained_model.pth'
-config.batchSize = 80
-config.workers = 10
-config.adam = True
-# config.lr = 0.00003
 import os
 import datetime
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-log_filename = os.path.join('log/','loss_acc-'+config.saved_model_prefix + '.log')
-if not os.path.exists('debug_files'):
-    os.mkdir('debug_files')
+
+log_filename = os.path.join('/kaggle/working/ctpn_crnn_pytorch/train_code/train_crnn/log/','loss_acc-'+config.saved_model_prefix + '.log')
+if not os.path.exists('/kaggle/working/ctpn_crnn_pytorch/train_code/train_crnn/debug_files'):
+    os.mkdir('/kaggle/working/ctpn_crnn_pytorch/train_code/train_crnn/debug_files')
 if not os.path.exists(config.saved_model_dir):
     os.mkdir(config.saved_model_dir)
-if config.use_log and not os.path.exists('log'):
-    os.mkdir('log')
+if config.use_log and not os.path.exists('/kaggle/working/ctpn_crnn_pytorch/train_code/train_crnn/log'):
+    os.mkdir('/kaggle/working/ctpn_crnn_pytorch/train_code/train_crnn/log')
 if config.use_log and os.path.exists(log_filename):
     os.remove(log_filename)
 if config.experiment is None:
@@ -45,7 +31,7 @@ if config.experiment is None:
 if not os.path.exists(config.experiment):
     os.mkdir(config.experiment)
 
-config.manualSeed = random.randint(1, 10000)  # fix seed
+config.manualSeed = random.randint(1, 10000)
 print("Random Seed: ", config.manualSeed)
 random.seed(config.manualSeed)
 np.random.seed(config.manualSeed)
@@ -95,7 +81,7 @@ print(crnn)
 # image = torch.FloatTensor(config.batchSize, 3, config.imgH, config.imgH)
 # text = torch.IntTensor(config.batchSize * 5)
 # length = torch.IntTensor(config.batchSize)
-device = torch.device('cpu')
+device = config.device
 if config.cuda:
     crnn.cuda()
     # crnn = torch.nn.DataParallel(crnn, device_ids=range(opt.ngpu))
@@ -140,7 +126,7 @@ def val(net, dataset, criterion, max_iter=100):
 
 
 def trainBatch(net, criterion, optimizer):
-    data = train_iter.next()
+    data = next(train_iter)
     cpu_images, cpu_texts = data
     batch_size = cpu_images.size(0)
     image = cpu_images.to(device)
@@ -174,7 +160,6 @@ for epoch in range(config.niter):
         cost = trainBatch(crnn, criterion, optimizer)
         print('epoch: {} iter: {}/{} Train loss: {:.3f}'.format(epoch, i, n_batch, cost.item()))
         loss_avg.add(cost)
-        loss_avg.add(cost)
         i += 1
     print('Train loss: %f' % (loss_avg.val()))
     if config.use_log:
@@ -183,5 +168,3 @@ for epoch in range(config.niter):
             f.write('train_loss:{}\n'.format(loss_avg.val()))
 
     val(crnn, test_dataset, criterion)
-
-

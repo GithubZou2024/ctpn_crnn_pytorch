@@ -20,6 +20,7 @@ def val_model(infofile,model,gpu,log_file = '0625.log'):
         content = f.readlines()
         num_all = 0
         num_correct = 0
+        max_print = 10
 
         for line in content:
             if '\t' in line:
@@ -35,8 +36,10 @@ def val_model(infofile,model,gpu,log_file = '0625.log'):
             if res == label:
                 num_correct+=1
             else:
-                print('filename:{}\npred  :{}\ntarget:{}'.format(fname, res, label))
                 h.write('filename:{}\npred  :{}\ntarget:{}\n'.format(fname,res, label))
+                if max_print>0:
+                    print('filename:{}\npred  :{}\ntarget:{}'.format(fname, res, label))
+                    max_print-=1
             # else:
             #     # new_name = saved_path + fname.split('/')[-1]
             #     # shutil.copyfile(fname, new_name)
