@@ -147,6 +147,7 @@ class MyDataset(Dataset):
         self.transform = transform
         self.target_transform = target_transform
         self.info_filename = info_filename
+        skip_chars = ['´', 'É']
         if isinstance(self.info_filename,str):
             self.info_filename = [self.info_filename]
         self.train = train
@@ -168,6 +169,16 @@ class MyDataset(Dataset):
                         label = label.strip()
                     else:
                         label = ' '+label.strip()+' '
+                    # 如果有未知字符集，跳过此样本
+                    need_skip = False
+                    for ch in skip_chars:
+                        if ch in label:
+                            need_skip = True
+                            break
+                    if need_skip:
+                        skipped_count += 1
+                        print(f"跳过样本: {fname} (标签中包含 '{ch}')")
+                        continue  # 跳过，不加入数据集
                     self.files.append(fname)
                     self.labels.append(label)
 
