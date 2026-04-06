@@ -72,7 +72,7 @@ with open(config.train_infofile, 'r', encoding='utf-8') as f:
     print(f"文件是否存在: {os.path.exists(full_path)}")
 
 # 3. 列出图片目录的前几个文件（修正：应该用目录路径，不是文件路径）
-img_dir_path = config.get_path(r"kaggle/input/datasets/zouhahaha/recognition/ch4_training_word_images_gt")  # 或其他正确的图片目录
+img_dir_path = config.get_path(r"/kaggle/input/datasets/zouhahaha/recognition/ch4_training_word_images_gt")  # 或其他正确的图片目录
 print(f"\n图片目录前5个文件:")
 if os.path.exists(img_dir_path) and os.path.isdir(img_dir_path):
     for i, f in enumerate(os.listdir(img_dir_path)):

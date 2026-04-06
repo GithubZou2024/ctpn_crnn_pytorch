@@ -2,37 +2,32 @@ import keys
 import os
 import torch
 import platform
+import config
 from path_utils import get_path
 
-# 环境检测
-IS_WINDOWS = platform.system() == 'Windows'
-HAS_CUDA = torch.cuda.is_available()
-
 # 根据环境自动调整配置
-if IS_WINDOWS or not HAS_CUDA:
-    # 本地CPU/Windows环境
-    cuda = False
-    device = torch.device('cpu')
-    workers = 0  # Windows避免多进程问题
-    batchSize = 8  # 减小batch size
-    ngpu = 0  # 不使用GPU
-    print("运行在本地CPU环境")
-else:
-    # Kaggle/Linux GPU环境
+if config.IS_KAGGLE:# Kaggle/Linux GPU环境
     cuda = True
     device = torch.device('cuda')
     workers = 4
     batchSize = 100
     ngpu = torch.cuda.device_count()  # 动态获取GPU数量
     print(f"运行在GPU环境，GPU数量: {ngpu}")
+else:# 本地CPU/Windows环境
+    cuda = False
+    device = torch.device('cpu')
+    workers = 0  # Windows避免多进程问题
+    batchSize = 8  # 减小batch size
+    ngpu = 0  # 不使用GPU
+    print("运行在本地CPU环境")
 
 # 路径配置 - get_path会自动处理路径映射
-train_infofile = get_path('kaggle/input/datasets/zouhahaha/recognition/ch4_training_word_images_gt/ch4_training_word_images_gt.txt')
+train_infofile = get_path('/kaggle/input/datasets/zouhahaha/recognition/ch4_training_word_images_gt/ch4_training_word_images_gt.txt')
 train_infofile_fullimg = None  # 如果没有就设为None
-val_infofile = get_path('kaggle/input/datasets/zouhahaha/recognition/ch4_test_word_images_gt/ch4_test_word_images_gt.txt')
+val_infofile = get_path('/kaggle/input/datasets/zouhahaha/recognition/ch4_test_word_images_gt/ch4_test_word_images_gt.txt')
 
 # 预训练模型路径 - get_path会自动处理Kaggle和本地的路径映射
-pretrained_model = get_path('kaggle/input/pretrained_CRNN/CRNN.pth')
+pretrained_model = get_path('/kaggle/input/pretrained_CRNN/CRNN.pth')
 
 # 字母表配置
 alphabet = keys.alphabet
@@ -51,7 +46,7 @@ lr = 0.0006
 beta1 = 0.5
 
 # 保存目录
-saved_model_dir = get_path('kaggle/working/ctpn_crnn_pytorch/checkpoints')
+saved_model_dir = get_path('/kaggle/working/ctpn_crnn_pytorch/checkpoints')
 if saved_model_dir and not os.path.exists(saved_model_dir):
     os.makedirs(saved_model_dir, exist_ok=True)
     print(f"创建目录: {saved_model_dir}")
