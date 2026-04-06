@@ -193,7 +193,9 @@ def trainBatch(net, criterion, optimizer, train_iter):
     print(f"length: {length}")
     
     preds = net(image)
-    print(f"preds.shape: {preds.shape}")
+    print(f"DataParallel 返回的 preds 形状: {preds.shape}")
+    print(f"当前 GPU 数量: {torch.cuda.device_count()}")
+    print(f"输入 batch_size: {batch_size}")
     
     seq_length = preds.size(0)
     preds_size = torch.full((batch_size,), seq_length, dtype=torch.long)
