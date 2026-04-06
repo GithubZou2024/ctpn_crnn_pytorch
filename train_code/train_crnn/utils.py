@@ -4,7 +4,7 @@
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-import collections
+import collections.abc
 from datetime import datetime
 import torch.nn.functional as F
 
@@ -132,7 +132,7 @@ class strLabelConverter(object):
                     for char in text# if char in self.dict.keys()
                 ]
                 length = [len(text)]
-            elif isinstance(text, collections.Iterable):
+            elif isinstance(text, collections.abc.Iterable):
                 length = [len(s) for s in text]
                 text = ''.join(text)
                 text, _ = self.encode(text)

@@ -69,37 +69,31 @@ import os
 print(f"当前工作目录: {os.getcwd()}")
 
 # 2. 打印 infofile 第一行和文件是否存在
-with open(config.train_infofile, 'r') as f:
+with open(config.train_infofile, 'r', encoding='utf-8') as f:
     first_line = f.readline().strip()
     print(f"infofile 第一行: {first_line}")
     
-    # 解析出图片路径
-    if '\\t' in first_line:
-        img_path = first_line.split('\\t')[0]
+    # 解析出图片路径（只取第一部分，不含标签）
+    if '\t' in first_line:
+        img_path = first_line.split('\t')[0].strip()
     else:
-        img_path = first_line
+        img_path = first_line.strip()
     
-    print(f"图片路径: {img_path}")
-    print(f"文件是否存在: {os.path.exists(img_path)}")
-    
-    # 如果不存在，尝试在常见目录查找
-    if not os.path.exists(img_path):
-        img_name = os.path.basename(img_path)
-        print(f"尝试查找文件: {img_name}")
-        
-        # 在图片目录查找
-        img_dir = "/kaggle/input/datasets/zouhahaha/recognition/ch4_training_word_images_gt"
-        full_path = os.path.join(img_dir, img_name)
-        print(f"完整路径: {full_path}")
-        print(f"是否存在: {os.path.exists(full_path)}")
+    # 直接用 get_path 转换路径
+    full_path = config.get_path(img_path)
+    print(f"完整路径: {full_path}")
+    print(f"文件是否存在: {os.path.exists(full_path)}")
 
-# 3. 列出图片目录的前几个文件
-img_dir = config.get_path(r"\kaggle\working\ctpn_crnn_pytorch\train_code\train_crnn\alphabet.pkl")
+# 3. 列出图片目录的前几个文件（修正：应该用目录路径，不是文件路径）
+img_dir_path = config.get_path(r"kaggle/input/datasets/zouhahaha/recognition/ch4_training_word_images_gt")  # 或其他正确的图片目录
 print(f"\n图片目录前5个文件:")
-for i, f in enumerate(os.listdir(img_dir)):
-    if i >= 5:
-        break
-    print(f"  {f}")
+if os.path.exists(img_dir_path) and os.path.isdir(img_dir_path):
+    for i, f in enumerate(os.listdir(img_dir_path)):
+        if i >= 5:
+            break
+        print(f"  {f}")
+else:
+    print(f"  目录不存在或不是目录: {img_dir_path}")
 ####################
 train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=config.batchSize,
@@ -127,6 +121,7 @@ def weights_init(m):
 
 
 crnn = crnn.CRNN(config.imgH, config.nc, config.nclass, config.nh)
+print(f"DEBUG: type = {type(config.pretrained_model)},{config.pretrained_model}")
 if config.pretrained_model!='' and os.path.exists(config.pretrained_model):
     print('loading pretrained model from %s' % config.pretrained_model)
     crnn.load_state_dict(torch.load(config.pretrained_model))

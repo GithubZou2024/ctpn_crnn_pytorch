@@ -1,4 +1,5 @@
 import pickle as pkl
+from path_utils import get_path
 # gen alphabet via label
 # alphabet_set = set()
 # infofiles = ['infofiles/infofile_selfcollect.txt','infofiles/infofile_train_public.txt']
@@ -18,7 +19,7 @@ import pickle as pkl
 # alphabet_list = sorted(list(alphabet_set))
 # pkl.dump(alphabet_list,open('alphabet.pkl','wb'))
 
-alphabet_list = pkl.load(open('/kaggle/working/ctpn_crnn_pytorch/train_code/train_crnn/alphabet.pkl','rb'))
+alphabet_list = pkl.load(open(get_path(r'kaggle\working\ctpn_crnn_pytorch\train_code\train_crnn\alphabet.pkl'),'rb'))
 alphabet = [ord(ch) for ch in alphabet_list]
 alphabet_v2 = alphabet
 # print(alphabet_v2)

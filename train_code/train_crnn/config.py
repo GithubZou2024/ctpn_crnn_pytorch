@@ -1,45 +1,66 @@
 import keys
 import os
 import torch
+import platform
+from path_utils import get_path
 
-IS_KAGGLE = 'KAGGLE_KERNEL_RUN_TYPE' in os.environ
-KAGGLE_ROOT = r"E:\programming\share\python"
+# 环境检测
+IS_WINDOWS = platform.system() == 'Windows'
+HAS_CUDA = torch.cuda.is_available()
 
-def get_path(path):
-    if IS_KAGGLE:
-        return path
-    else:
-        # 确保路径分隔符正确
-        full_path = os.path.join(KAGGLE_ROOT, path)
-        return full_path.replace('/', os.sep).replace('\\', os.sep)
+# 根据环境自动调整配置
+if IS_WINDOWS or not HAS_CUDA:
+    # 本地CPU/Windows环境
+    cuda = False
+    device = torch.device('cpu')
+    workers = 0  # Windows避免多进程问题
+    batchSize = 8  # 减小batch size
+    ngpu = 0  # 不使用GPU
+    print("运行在本地CPU环境")
+else:
+    # Kaggle/Linux GPU环境
+    cuda = True
+    device = torch.device('cuda')
+    workers = 4
+    batchSize = 100
+    ngpu = torch.cuda.device_count()  # 动态获取GPU数量
+    print(f"运行在GPU环境，GPU数量: {ngpu}")
 
-cuda = True
-device = torch.device('cuda' if cuda and torch.cuda.is_available() else 'cpu')
-train_infofile = get_path('/kaggle/input/datasets/zouhahaha/recognition/ch4_training_word_images_gt/ch4_training_word_images_gt.txt')
-train_infofile_fullimg = get_path('')
-val_infofile = get_path('/kaggle/input/datasets/zouhahaha/recognition/ch4_test_word_images_gt/ch4_test_word_images_gt.txt')
+# 路径配置 - get_path会自动处理路径映射
+train_infofile = get_path('kaggle/input/datasets/zouhahaha/recognition/ch4_training_word_images_gt/ch4_training_word_images_gt.txt')
+train_infofile_fullimg = None  # 如果没有就设为None
+val_infofile = get_path('kaggle/input/datasets/zouhahaha/recognition/ch4_test_word_images_gt/ch4_test_word_images_gt.txt')
+
+# 预训练模型路径 - get_path会自动处理Kaggle和本地的路径映射
+pretrained_model = get_path('kaggle/input/pretrained_CRNN/CRNN.pth')
+
+# 字母表配置
 alphabet = keys.alphabet
 alphabet_v2 = keys.alphabet_v2
-workers = 4
-batchSize = 100
+
+# 模型参数
 imgH = 32
 imgW = 280
 nc = 1
-nclass = len(alphabet)+1
+nclass = len(alphabet) + 1
 nh = 256
+
+# 训练参数
 niter = 100
 lr = 0.0006
 beta1 = 0.5
-ngpu = 2
-pretrained_model = get_path('/kaggle/input/pretrained_CRNN/CRNN.pth')
-saved_model_dir = get_path('crnn_models')
+
+# 保存目录
+saved_model_dir = get_path('kaggle/working/ctpn_crnn_pytorch/checkpoints')
 if saved_model_dir and not os.path.exists(saved_model_dir):
     os.makedirs(saved_model_dir, exist_ok=True)
     print(f"创建目录: {saved_model_dir}")
+
 saved_model_prefix = 'CRNN-'
+
+# 其他配置
 use_log = False
 remove_blank = False
-
 experiment = None
 displayInterval = 500
 n_test_disp = 10
@@ -49,3 +70,12 @@ adam = False
 adadelta = False
 keep_ratio = False
 random_sample = True
+
+# 打印配置信息确认
+print(f"设备: {device}")
+print(f"工作进程数: {workers}")
+print(f"批次大小: {batchSize}")
+print(f"GPU数量: {ngpu}")
+print(f"训练文件: {train_infofile}")
+print(f"验证文件: {val_infofile}")
+print(f"预训练模型: {pretrained_model if pretrained_model else 'None'}")

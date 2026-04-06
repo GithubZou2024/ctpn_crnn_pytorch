@@ -10,6 +10,7 @@ from PIL import Image,ImageEnhance,ImageOps
 import numpy as np
 import codecs
 import trans
+import config
 
 debug_idx = 0
 debug = True
@@ -168,7 +169,7 @@ class MyDataset(Dataset):
                         label = label.strip()
                     else:
                         label = ' '+label.strip()+' '
-                    self.files.append(fname)
+                    self.files.append(config.get_path(fname))
                     self.labels.append(label)
 
     def name(self):
