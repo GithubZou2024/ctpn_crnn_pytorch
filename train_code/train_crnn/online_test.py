@@ -6,7 +6,6 @@ from PIL import Image
 import numpy as np
 import crnn as crnn
 import cv2
-import os
 import torch.nn.functional as F
 import keys
 import config
@@ -15,14 +14,8 @@ alphabet = keys.alphabet_v2
 converter = utils.strLabelConverter(alphabet.copy())
 
 
-def val_model(infofile,model,gpu,log_file = '0406.log'):
-    log_path = os.path.join(config.log_dir, log_file)
-    h = open(log_path, 'w')
-    test_dataset = mydataset.MyDataset(
-        info_filename=infofile, 
-        transform=mydataset.resizeNormalize((config.imgW, config.imgH), is_test=True)
-    )
-    
+def val_model(infofile,model,gpu,log_file = '0625.log'):
+    h = open('log/{}'.format(log_file),'w')
     with open(infofile) as f:
         content = f.readlines()
         num_all = 0
@@ -35,7 +28,6 @@ def val_model(infofile,model,gpu,log_file = '0406.log'):
                 fname, label = line.split('g:')
                 fname += 'g'
             label = label.replace('\r', '').replace('\n', '')
-            label = label.strip("'").strip('"').strip()
             img = cv2.imread(fname)
             res = val_on_image(img,model,gpu)
             res = res.strip()
@@ -66,24 +58,19 @@ def val_on_image(img,model,gpu):
     image = transformer( image )
     if gpu:
         image = image.cuda()
-    image = image.view( 1, *image.size())
+    image = image.view( 1, *image.size() )
     image = Variable( image )
 
     model.eval()
-    preds = model(image)
-    preds = F.log_softmax(preds, 2)
-    conf, preds = preds.max(2)
-    preds = preds.transpose(1, 0).contiguous().view(-1)
-    preds_size = Variable(torch.IntTensor([preds.size(0)]))
-    
-    # 添加调试：打印原始预测索引
-    # 先用 raw=True 看看原始解码结果
-    raw_pred = converter.decode(preds.data, preds_size.data, raw=True)
-    print(f"Raw 解码结果: '{raw_pred}'")
-    
-    sim_pred = converter.decode(preds.data, preds_size.data, raw=False)
-    print(f"Sim 解码结果: '{sim_pred}'")
-    
+    preds = model( image )
+
+    preds = F.log_softmax(preds,2)
+    conf, preds = preds.max( 2 )
+    preds = preds.transpose( 1, 0 ).contiguous().view( -1 )
+
+    preds_size = Variable( torch.IntTensor( [preds.size( 0 )] ) )
+    # raw_pred = converter.decode( preds.data, preds_size.data, raw=True )
+    sim_pred = converter.decode( preds.data, preds_size.data, raw=False )
     return sim_pred
 
 
