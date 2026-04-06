@@ -210,10 +210,6 @@ class MyDatasetPro(Dataset):
         self.labels = list()
         self.locs = list()
         
-        # 统计跳过的样本数
-        skipped_txtline = 0
-        skipped_fullimg = 0
-        
         for info_name in self.info_filename_txtline:
             with open(info_name) as f:
                 content = f.readlines()
@@ -221,18 +217,6 @@ class MyDatasetPro(Dataset):
                     fname,label = line.split('g:')
                     fname += 'g'
                     label = label.replace('\r','').replace('\n','')
-                    
-                    # 添加判断：检查标签中是否有不在 alphabet 中的字符
-                    has_unknown = False
-                    for c in label:
-                        if c not in config.alphabet:
-                            has_unknown = True
-                            break
-                    
-                    if has_unknown:
-                        skipped_txtline += 1
-                        continue  # 跳过这个样本
-                    
                     self.files.append(fname)
                     self.labels.append(label)
                     
@@ -243,23 +227,10 @@ class MyDatasetPro(Dataset):
                 content = f.readlines()
                 for line in content:
                     fname,label,left, top, right, bottom = line.strip().split('\t')
-                    
-                    # 添加判断：检查标签中是否有不在 alphabet 中的字符
-                    has_unknown = False
-                    for c in label:
-                        if c not in config.alphabet:
-                            has_unknown = True
-                            break
-                    
-                    if has_unknown:
-                        skipped_fullimg += 1
-                        continue  # 跳过这个样本
-                    
                     self.files.append(fname)
                     self.labels.append(label)
                     self.locs.append([int(left),int(top),int(right),int(bottom)])
                     
-        print(f"加载 {len(self.labels)} 个样本, 跳过 txtline: {skipped_txtline}, 跳过 fullimg: {skipped_fullimg}")
         print(len(self.labels),len(self.files))
         
     def name(self):
