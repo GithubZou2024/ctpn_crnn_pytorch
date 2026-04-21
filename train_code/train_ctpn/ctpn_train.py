@@ -11,6 +11,10 @@ import config
 from ctpn_model import CTPN_Model, RPN_CLS_Loss, RPN_REGR_Loss
 from data.dataset import ICDARDataset
 
+# 日志部分
+import csv
+from datetime import datetime
+
 
 random_seed = 2019
 torch.random.manual_seed(random_seed)
@@ -43,6 +47,21 @@ def weights_init(m):
 
 
 if __name__ == '__main__':
+    # 创建 loss 记录文件
+    loss_batch_path = os.path.join(config.outputs, 'loss_batch.csv')
+    loss_epoch_path = os.path.join(config.outputs, 'loss_epoch.csv')
+    
+    # 写入表头
+    with open(loss_batch_path, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['epoch', 'batch', 'loss_cls', 'loss_regr', 'loss', 'timestamp'])
+    with open(loss_epoch_path, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['epoch', 'loss_cls', 'loss_regr', 'loss'])
+    
+    print(f"Loss 记录将保存到: {config.outputs}")
+    
+    # 训练
     device = config.device
     checkpoints_weight = config.pretrained_weights
     print('exist pretrained ', os.path.exists(checkpoints_weight))
@@ -71,12 +90,12 @@ if __name__ == '__main__':
             model.module.load_state_dict(cc['model_state_dict'])
         else:
             model.load_state_dict(cc['model_state_dict'])
-        resume_epoch = cc['epoch']  # 修正缩进
+        resume_epoch = cc['epoch']
     else:
         print('no pretrained weight found, training from scratch')
         model.apply(weights_init)
 
-    params_to_update = model.parameters()  # 修正拼写
+    params_to_update = model.parameters()
     optimizer = optim.SGD(params_to_update, lr=lr, momentum=0.9)
     
     critetion_cls = RPN_CLS_Loss(device)
@@ -92,7 +111,7 @@ if __name__ == '__main__':
     for epoch in range(resume_epoch+1, epochs):
         print(f'Epoch {epoch}/{epochs}')
         print('#'*50)
-        epoch_size = len(dataloader)  # 修正：直接用dataloader长度
+        epoch_size = len(dataloader)
         model.train()
         epoch_loss_cls = 0
         epoch_loss_regr = 0
@@ -124,11 +143,32 @@ if __name__ == '__main__':
                   f'batch: loss_cls:{loss_cls.item():.4f}--loss_regr:{loss_regr.item():.4f}--loss:{loss.item():.4f}\n'
                   f'Epoch: loss_cls:{epoch_loss_cls/mmp:.4f}--loss_regr:{epoch_loss_regr/mmp:.4f}--'
                   f'loss:{epoch_loss/mmp:.4f}\n')
+            
+            # 记录每个 batch 的 loss
+            with open(loss_batch_path, 'a', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([
+                    epoch, batch_i,
+                    f"{loss_cls.item():.4f}",
+                    f"{loss_regr.item():.4f}",
+                    f"{loss.item():.4f}",
+                    datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                ])
     
         epoch_loss_cls /= epoch_size
         epoch_loss_regr /= epoch_size
         epoch_loss /= epoch_size
         print(f'Epoch:{epoch}--{epoch_loss_cls:.4f}--{epoch_loss_regr:.4f}--{epoch_loss:.4f}')
+        
+        # 记录每个 epoch 的平均 loss
+        with open(loss_epoch_path, 'a', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow([
+                epoch,
+                f"{epoch_loss_cls:.4f}",
+                f"{epoch_loss_regr:.4f}",
+                f"{epoch_loss:.4f}"
+            ])
         
         if best_loss_cls > epoch_loss_cls or best_loss_regr > epoch_loss_regr or best_loss > epoch_loss:
             best_loss = epoch_loss
@@ -146,6 +186,10 @@ if __name__ == '__main__':
                             best_loss_cls,
                             best_loss_regr,
                             best_loss)
+    
+    print(f"\n训练完成！Loss 记录已保存到:")
+    print(f"  - Batch 级别: {loss_batch_path}")
+    print(f"  - Epoch 级别: {loss_epoch_path}")
     
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
