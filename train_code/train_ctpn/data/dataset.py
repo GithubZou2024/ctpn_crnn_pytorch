@@ -189,6 +189,14 @@ class ICDARDataset(Dataset):
 
         #####for read error, use default image#####
 
+        # 先统一到固定高度 600
+        target_h = 600
+        scale = target_h / h
+        new_w = int(w * scale)
+        img = cv2.resize(img, (new_w, target_h))
+        h, w = target_h, new_w
+        
+        # 如果图片还是太大（比如宽度 > 1600），再缩放
         h, w, c = img.shape
         rescale_fac = max(h, w) / 1600
         if rescale_fac>1.0:
