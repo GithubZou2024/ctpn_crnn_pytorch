@@ -191,27 +191,16 @@ class ICDARDataset(Dataset):
 
         h, w, c = img.shape
 
-        # 统一高度到 600
+        # 直接 resize 到固定尺寸 600×1280
         target_h = 600
-        rescale_fac = target_h / h
-        new_w = int(w * rescale_fac)
-        img = cv2.resize(img, (new_w, target_h))
-        h, w = target_h, new_w
+        target_w = 1280
+        img = cv2.resize(img, (target_w, target_h))
+        h, w = target_h, target_w
 
-        # 宽度处理：超过 1280 就缩放，不足就 padding
-        max_w = 1280
-        if w > max_w:
-            # 宽度超标，按宽度限制重新计算
-            rescale_fac = max_w / w
-            new_h = int(h * rescale_fac)
-            img = cv2.resize(img, (max_w, new_h))
-            h, w = new_h, max_w
-        elif w < max_w:
-            # 宽度不足，右侧补黑边
-            pad_w = max_w - w
-            img = np.pad(img, ((0, 0), (0, pad_w), (0, 0)), mode='constant', constant_values=0)
-            w = max_w
-
+        # 计算缩放因子（用于坐标调整）
+        rescale_fac_h = target_h / h
+        rescale_fac_w = target_w / w
+        rescale_fac = (rescale_fac_h + rescale_fac_w) / 2
         # 此时 w 一定等于 max_w = 1280，h 在 600 左右（可能略有变化）
 
         gt_path = os.path.join(self.labelsdir, 'gt_'+img_name.split('.')[0]+'.txt')
