@@ -190,30 +190,32 @@ class ICDARDataset(Dataset):
         #####for read error, use default image#####
 
         h, w, c = img.shape
+
         # 统一高度到 600
         target_h = 600
         rescale_fac = target_h / h
         new_w = int(w * rescale_fac)
         img = cv2.resize(img, (new_w, target_h))
         h, w = target_h, new_w
-        
-        # 固定宽度到 600（右侧补黑边）
-        target_w = 1000
-        if w < target_w:
-            pad_w = target_w - w
-            # 补黑边 (top, bottom, left, right)
+
+        # 宽度处理：超过 1280 就缩放，不足就 padding
+        max_w = 1280
+        if w > max_w:
+            # 宽度超标，按宽度限制重新计算
+            rescale_fac = max_w / w
+            new_h = int(h * rescale_fac)
+            img = cv2.resize(img, (max_w, new_h))
+            h, w = new_h, max_w
+        elif w < max_w:
+            # 宽度不足，右侧补黑边
+            pad_w = max_w - w
             img = np.pad(img, ((0, 0), (0, pad_w), (0, 0)), mode='constant', constant_values=0)
-            w = target_w
-        
-        # 如果图片还是太大（比如宽度 > 1600），再缩放
-        # rescale_fac = max(h, w) / 1600
-        # if rescale_fac>1.0:
-        #     h = int(h/rescale_fac)
-        #     w = int(w/rescale_fac)
-        #     img = cv2.resize(img,(w,h))
+            w = max_w
+
+        # 此时 w 一定等于 max_w = 1280，h 在 600 左右（可能略有变化）
 
         gt_path = os.path.join(self.labelsdir, 'gt_'+img_name.split('.')[0]+'.txt')
-        gtbox = self.parse_gtfile(gt_path,rescale_fac)
+        gtbox = self.parse_gtfile(gt_path, rescale_fac)
 
         # clip image
         if np.random.randint(2) == 1:
