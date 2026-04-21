@@ -198,7 +198,7 @@ class ICDARDataset(Dataset):
         h, w = target_h, new_w
         
         # 固定宽度到 600（右侧补黑边）
-        target_w = 600
+        target_w = 1000
         if w < target_w:
             pad_w = target_w - w
             # 补黑边 (top, bottom, left, right)
