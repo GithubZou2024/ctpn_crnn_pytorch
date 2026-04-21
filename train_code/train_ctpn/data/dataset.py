@@ -190,19 +190,27 @@ class ICDARDataset(Dataset):
         #####for read error, use default image#####
 
         h, w, c = img.shape
-        # 先统一到固定高度 600
+        # 统一高度到 600
         target_h = 600
-        scale = target_h / h
-        new_w = int(w * scale)
+        rescale_fac = target_h / h
+        new_w = int(w * rescale_fac)
         img = cv2.resize(img, (new_w, target_h))
         h, w = target_h, new_w
         
+        # 固定宽度到 600（右侧补黑边）
+        target_w = 600
+        if w < target_w:
+            pad_w = target_w - w
+            # 补黑边 (top, bottom, left, right)
+            img = np.pad(img, ((0, 0), (0, pad_w), (0, 0)), mode='constant', constant_values=0)
+            w = target_w
+        
         # 如果图片还是太大（比如宽度 > 1600），再缩放
-        rescale_fac = max(h, w) / 1600
-        if rescale_fac>1.0:
-            h = int(h/rescale_fac)
-            w = int(w/rescale_fac)
-            img = cv2.resize(img,(w,h))
+        # rescale_fac = max(h, w) / 1600
+        # if rescale_fac>1.0:
+        #     h = int(h/rescale_fac)
+        #     w = int(w/rescale_fac)
+        #     img = cv2.resize(img,(w,h))
 
         gt_path = os.path.join(self.labelsdir, 'gt_'+img_name.split('.')[0]+'.txt')
         gtbox = self.parse_gtfile(gt_path,rescale_fac)
