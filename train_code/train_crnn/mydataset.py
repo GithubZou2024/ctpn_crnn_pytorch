@@ -14,7 +14,7 @@ import config
 import os
 
 debug_idx = 0
-debug = True
+debug = False
 
 crop = trans.Crop(probability=0.1)
 crop2 = trans.Crop2(probability=1.1)
