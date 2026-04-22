@@ -26,8 +26,16 @@ def val_model(infofile,model,gpu,log_file = '20260422.log'):
         max_print = 10
 
         for line in content:
+            # 处理不同格式
             if '\t' in line:
                 fname, label = line.split('\t')
+            elif ',' in line:
+                parts = line.strip().split(',', 1)
+                if len(parts) != 2:
+                    continue
+                fname, label = parts
+                # 添加图片路径
+                fname = os.path.join('/kaggle/input/datasets/ravi02516/20k-synthetic-ocr-dataset/files/20k train', fname.strip())
             else:
                 fname, label = line.split('g:')
                 fname += 'g'
