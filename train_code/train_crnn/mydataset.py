@@ -10,6 +10,7 @@ from PIL import Image,ImageEnhance,ImageOps
 import numpy as np
 import codecs
 import trans
+import config
 
 debug_idx = 0
 debug = True
@@ -259,7 +260,12 @@ class MyDatasetPro(Dataset):
                             continue
                         fname, label = parts
                         # 添加图片路径前缀
-                        fname = f"images/{fname}"
+                        fname = fname.strip()
+                        # 使用 config 中的路径
+                        if 'train' in info_name.lower():
+                            fname = os.path.join(config.train_img_dir, fname)
+                        else:
+                            fname = os.path.join(config.val_img_dir, fname)
                     else:
                         # 处理原来的 g: 格式
                         if 'g:' in line:

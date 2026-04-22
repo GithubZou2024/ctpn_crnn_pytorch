@@ -2,7 +2,6 @@ import keys
 import os
 import torch
 import platform
-import config
 from path_utils import get_path
 
 # 根据环境自动调整配置
@@ -26,6 +25,9 @@ else:# 本地CPU/Windows环境
 train_infofile = get_path('/kaggle/input/datasets/ravi02516/20k-synthetic-ocr-dataset/train.csv')
 train_infofile_fullimg = None  # 如果没有就设为None
 val_infofile = get_path('/kaggle/input/datasets/ravi02516/20k-synthetic-ocr-dataset/test.csv')
+# 图片目录配置
+train_img_dir = '/kaggle/input/datasets/ravi02516/20k-synthetic-ocr-dataset/files/20k train'
+val_img_dir = '/kaggle/input/datasets/ravi02516/20k-synthetic-ocr-dataset/files/20k train'
 
 # 预训练模型路径 - get_path会自动处理Kaggle和本地的路径映射
 # /kaggle/input/datasets/zouhahaha/pretrained-crnn/CRNN-1010.pth
