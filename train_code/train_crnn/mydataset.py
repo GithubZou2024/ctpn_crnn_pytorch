@@ -156,28 +156,54 @@ class MyDataset(Dataset):
         for info_name in self.info_filename:
             with open(info_name) as f:
                 content = f.readlines()
-                for line in content:
+                for line_num, line in enumerate(content):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    
+                    # Skip CSV header (first line)
+                    if line_num == 0 and ('image' in line.lower() and 'label' in line.lower()):
+                        continue
+                    
+                    # Handle different formats
                     if '\t' in line:
-                        if len(line.split('\t'))!=2:
+                        if len(line.split('\t')) != 2:
                             print(line)
+                            continue
                         fname, label = line.split('\t')
-
+                    elif ',' in line:
+                        # CSV format: img_0.jpg,V3ITMTB1
+                        parts = line.split(',', 1)
+                        if len(parts) != 2:
+                            print(f"Skipping invalid CSV line: {line}")
+                            continue
+                        fname, label = parts
+                        # Add images/ prefix if needed
+                        if not fname.startswith('images/') and not fname.startswith('/'):
+                            fname = f"images/{fname}"
                     else:
-                        fname,label = line.split('g:')
+                        # Old g: format
+                        if 'g:' not in line:
+                            print(f"Skipping unrecognized line: {line}")
+                            continue
+                        fname, label = line.split('g:')
                         fname += 'g'
+                    
                     if remove_blank:
                         label = label.strip()
                     else:
-                        label = ' '+label.strip()+' '
-                    # 如果有未知字符集，跳过此样本
+                        label = ' ' + label.strip() + ' '
+                    
+                    # Skip samples with invalid characters
                     need_skip = False
                     for ch in skip_chars:
                         if ch in label:
                             need_skip = True
                             break
                     if need_skip:
-                        print(f"跳过样本: {fname} (标签中包含 '{ch}')")
-                        continue  # 跳过，不加入数据集
+                        print(f"Skipping sample: {fname} (label contains '{ch}')")
+                        continue
+                    
                     self.files.append(fname)
                     self.labels.append(label)
 
