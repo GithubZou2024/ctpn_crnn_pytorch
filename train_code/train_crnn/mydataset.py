@@ -11,6 +11,7 @@ import numpy as np
 import codecs
 import trans
 import config
+impor os
 
 debug_idx = 0
 debug = True
