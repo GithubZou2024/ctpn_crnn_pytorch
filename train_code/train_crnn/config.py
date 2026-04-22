@@ -11,7 +11,7 @@ if IS_KAGGLE:# Kaggle/Linux GPU环境
     device = torch.device('cuda')
     workers = 4
     batchSize = 100
-    ngpu = torch.cuda.device_count()  # 动态获取GPU数量
+    ngpu = 1  # 动态获取GPU数量
     print(f"运行在GPU环境，GPU数量: {ngpu}")
 else:# 本地CPU/Windows环境
     cuda = False

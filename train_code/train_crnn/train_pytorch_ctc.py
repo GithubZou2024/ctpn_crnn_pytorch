@@ -155,43 +155,20 @@ def val(net, dataset, criterion, max_iter=100, current_epoch=0):
 def trainBatch(net, criterion, optimizer, train_iter, converter, device):
     data = next(train_iter)
     cpu_images, cpu_texts = data
+    batch_size = cpu_images.size(0)
     image = cpu_images.to(device)
 
     text, length = converter.encode(cpu_texts)
-    
-    preds = net(image)
-    
-    # 获取实际 batch size
-    actual_batch_size = preds.size(1)
-    
-    print(f"Debug: cpu_images batch size: {cpu_images.size(0)}")
-    print(f"Debug: preds batch size: {actual_batch_size}")
-    print(f"Debug: text length: {len(text)}")
-    print(f"Debug: length length: {len(length)}")
-    
-    # 确保 text 和 length 与 preds 的 batch size 匹配
-    if len(text) > actual_batch_size:
-        text = text[:actual_batch_size]
-        length = length[:actual_batch_size]
-    elif len(text) < actual_batch_size:
-        # 这种情况不应该发生，但为了安全
-        print(f"Warning: text length {len(text)} < actual_batch_size {actual_batch_size}")
-        return None
-    
     text = text.to(device)
     length = length.to(device)
     
+    preds = net(image)
+    
     seq_len = preds.size(0)
-    preds_size = torch.full((actual_batch_size,), seq_len, dtype=torch.int32, device=device)
+    preds_size = torch.full((batch_size,), seq_len, dtype=torch.int32, device=device)
     
     log_probs = preds.log_softmax(2)
-    
-    # 添加额外的安全检查
-    if torch.isnan(log_probs).any():
-        print("NaN in log_probs")
-        return None
-        
-    cost = criterion(log_probs, text, preds_size, length) / actual_batch_size
+    cost = criterion(log_probs, text, preds_size, length) / batch_size
     
     if torch.isnan(cost):
         print(f"NaN detected!")
