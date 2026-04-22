@@ -50,7 +50,7 @@ def val_model(infofile, model, gpu, log_file='20260422.log'):
                 fname = fname.strip()
                 label = label.strip()
                 # 添加图片路径
-                img_dir = '/kaggle/input/datasets/ravi02516/20k-synthetic-ocr-dataset/files/20k train'
+                img_dir = config.val_img_dir
                 fname = os.path.join(img_dir, fname)
             else:
                 # 原来的 g: 格式
