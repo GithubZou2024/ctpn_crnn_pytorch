@@ -156,62 +156,32 @@ def trainBatch(net, criterion, optimizer, train_iter, converter, device):
 
     text, length = converter.encode(cpu_texts)
     
-    print(f"\n========== Debug Info ==========")
-    print(f"cpu_images.shape: {cpu_images.shape}")
-    print(f"cpu_texts (first 3): {cpu_texts[:3]}")
-    
-    # 前向传播
     preds = net(image)
-    print(f"preds.shape: {preds.shape}")
     
-    # 双GPU时，preds的实际batch size
+    # 关键修改：使用 preds 的实际 batch_size
     actual_batch_size = preds.size(1)
-    seq_len = preds.size(0)
-    num_classes = preds.size(2)
     
-    print(f"actual_batch_size (from preds): {actual_batch_size}")
-    print(f"seq_len: {seq_len}")
-    print(f"num_classes: {num_classes}")
+    # 只取前 actual_batch_size 个标签（因为 DataParallel 会拆分）
+    text = text[:actual_batch_size]
+    length = length[:actual_batch_size]
     
-    # 将 text 和 length 移到设备
     text = text.to(device)
     length = length.to(device)
     
-    print(f"text.shape: {text.shape}")
-    print(f"length.shape: {length.shape}")
-    print(f"length (first 5): {length[:5]}")
-    
-    # 创建 preds_size
+    seq_len = preds.size(0)
     preds_size = torch.full((actual_batch_size,), seq_len, dtype=torch.int32, device=device)
-    print(f"preds_size.shape: {preds_size.shape}")
-    print(f"preds_size: {preds_size[:5]}")
     
-    # CTC loss
     log_probs = preds.log_softmax(2)
-    print(f"log_probs.shape: {log_probs.shape}")
-    
-    try:
-        cost = criterion(log_probs, text, preds_size, length) / actual_batch_size
-        print(f"cost: {cost.item():.6f}")
-    except Exception as e:
-        print(f"Error: {e}")
-        print(f"log_probs.shape: {log_probs.shape}")
-        print(f"text.shape: {text.shape}")
-        print(f"preds_size.shape: {preds_size.shape}")
-        print(f"length.shape: {length.shape}")
-        raise e
-    
-    print(f"========== End Debug ==========\n")
+    cost = criterion(log_probs, text, preds_size, length) / actual_batch_size
     
     if torch.isnan(cost):
-        print(f"NaN detected! texts: {cpu_texts}")
+        print(f"NaN detected!")
         return None
     else:
         net.zero_grad()
         cost.backward()
         optimizer.step()
     return cost
-
 
 # ========== 训练循环 ==========
 for epoch in range(config.niter):

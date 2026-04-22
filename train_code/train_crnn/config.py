@@ -17,7 +17,7 @@ else:# 本地CPU/Windows环境
     cuda = False
     device = torch.device('cpu')
     workers = 0  # Windows避免多进程问题
-    batchSize = 8  # 减小batch size
+    batchSize = 50  # 减小batch size
     ngpu = 0  # 不使用GPU
     print("运行在本地CPU环境")
 
