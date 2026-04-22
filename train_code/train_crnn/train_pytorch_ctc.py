@@ -158,10 +158,11 @@ def trainBatch(net, criterion, optimizer, train_iter, converter, device):
     text, length = converter.encode(cpu_texts)
     
     preds = net(image)
-    preds_size = torch.IntTensor([preds.size(0)] * batch_size)
+    preds_size = torch.full((batch_size,), preds.size(0), dtype=torch.int32)
     if config.cuda:
         preds_size = preds_size.to(device)
-    
+        text = text.to(device)
+        length = length.to(device)
     cost = criterion(preds.log_softmax(2), text, preds_size, length) / batch_size
     
     if torch.isnan(cost):
