@@ -153,20 +153,53 @@ def trainBatch(net, criterion, optimizer, train_iter, converter, device):
     data = next(train_iter)
     cpu_images, cpu_texts = data
     batch_size = cpu_images.size(0)
-    image = cpu_images.to(device)
-
-    text, length = converter.encode(cpu_texts)
     
+    print(f"\n========== Debug Info ==========")
+    print(f"batch_size: {batch_size}")
+    print(f"cpu_images shape: {cpu_images.shape}")
+    print(f"cpu_texts: {cpu_texts[:3]}...")  # 只打印前3个
+    
+    # 数据移到设备
+    image = cpu_images.to(device)
+    text, length = converter.encode(cpu_texts)
+    text = text.to(device)
+    length = length.to(device)
+    
+    print(f"text shape: {text.shape}")
+    print(f"length shape: {length.shape}")
+    print(f"length: {length}")
+    
+    # 前向传播
     preds = net(image)
-    preds_size = torch.full((batch_size,), preds.size(0), dtype=torch.int32)
-    if config.cuda:
-        preds_size = preds_size.to(device)
-        text = text.to(device)
-        length = length.to(device)
-    cost = criterion(preds.log_softmax(2), text, preds_size, length) / batch_size
+    print(f"preds shape: {preds.shape}")  # 应该是 [seq_len, batch_size, num_classes]
+    
+    # 序列长度
+    seq_len = preds.size(0)
+    preds_size = torch.full((batch_size,), seq_len, dtype=torch.int32, device=device)
+    
+    print(f"seq_len: {seq_len}")
+    print(f"preds_size shape: {preds_size.shape}")
+    print(f"preds_size: {preds_size}")
+    
+    # CTC loss
+    log_probs = preds.log_softmax(2)
+    print(f"log_probs shape: {log_probs.shape}")
+    
+    try:
+        cost = criterion(log_probs, text, preds_size, length) / batch_size
+        print(f"cost: {cost.item():.6f}")
+    except Exception as e:
+        print(f"Error in criterion: {e}")
+        print(f"log_probs shape: {log_probs.shape}")
+        print(f"text shape: {text.shape}")
+        print(f"preds_size shape: {preds_size.shape}")
+        print(f"length shape: {length.shape}")
+        raise e
+    
+    print(f"========== End Debug ==========\n")
     
     if torch.isnan(cost):
-        print(batch_size, cpu_texts)
+        print(f"NaN detected! batch_size: {batch_size}, texts: {cpu_texts}")
         return None
     else:
         net.zero_grad()
