@@ -179,9 +179,13 @@ class MyDataset(Dataset):
                             print(f"Skipping invalid CSV line: {line}")
                             continue
                         fname, label = parts
-                        # Add images/ prefix if needed
-                        if not fname.startswith('images/') and not fname.startswith('/'):
-                            fname = f"images/{fname}"
+                        # 添加图片路径前缀
+                        fname = fname.strip()
+                        # 使用 config 中的路径
+                        if 'train' in info_name.lower():
+                            fname = os.path.join(config.train_img_dir, fname)
+                        else:
+                            fname = os.path.join(config.val_img_dir, fname)
                     else:
                         # Old g: format
                         if 'g:' not in line:
