@@ -1,3 +1,5 @@
+import os
+
 import torch
 from torch.autograd import Variable
 import utils
@@ -14,8 +16,9 @@ alphabet = keys.alphabet_v2
 converter = utils.strLabelConverter(alphabet.copy())
 
 
-def val_model(infofile,model,gpu,log_file = '0625.log'):
-    h = open('/kaggle/working/ctpn_crnn_pytorch/logs/{}'.format(log_file),'w')
+def val_model(infofile,model,gpu,log_file = '20260422.log'):
+    log_dir = config.log_dir
+    h = open(os.path.join(log_dir, log_file), 'w')
     with open(infofile) as f:
         content = f.readlines()
         num_all = 0
