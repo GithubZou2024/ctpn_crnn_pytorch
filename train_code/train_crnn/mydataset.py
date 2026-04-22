@@ -202,41 +202,55 @@ class MyDataset(Dataset):
         return len(self.labels)
 
 class MyDatasetPro(Dataset):
-    def __init__(self, info_filename_txtline=list(), info_filename_fullimg=list(), train=True, txtline_transform=data_tf,
-                 fullimg_transform = data_tf_fullimg, target_transform=None):
+    def __init__(self, info_filename, train=True, transform=data_tf, target_transform=None, remove_blank=False):
         super(Dataset, self).__init__()
-        self.txtline_transform = txtline_transform
-        self.fullimg_transform = fullimg_transform
+        self.transform = transform
         self.target_transform = target_transform
-        self.info_filename_txtline = info_filename_txtline
-        self.info_filename_fullimg = info_filename_fullimg
-        if isinstance(self.info_filename_txtline,str):
-            self.info_filename_txtline = [self.info_filename_txtline]
-        if isinstance(self.info_filename_fullimg,str):
-            self.info_filename_fullimg = [self.info_filename_fullimg]
+        self.info_filename = info_filename
+        skip_chars = ['´', 'É']
+        if isinstance(self.info_filename, str):
+            self.info_filename = [self.info_filename]
         self.train = train
         self.files = list()
         self.labels = list()
-        self.locs = list()
-        for info_name in self.info_filename_txtline:
+        for info_name in self.info_filename:
             with open(info_name) as f:
-                content = f.readlines()
-                for line in content:
-                    fname,label = line.split('g:')
-                    fname += 'g'
-                    label = label.replace('\r','').replace('\n','')
+                lines = f.readlines()
+                for i, line in enumerate(lines):
+                    if i == 0 and line.strip().startswith('image name') or line.strip().startswith('image_name'):  # 跳过 CSV 表头
+                        continue
+                    line = line.strip()
+                    if not line:
+                        continue
+                        
+                    if '\t' in line:
+                        fname, label = line.split('\t')
+                    else:
+                        # 处理 CSV 逗号分隔
+                        parts = line.split(',', 1)
+                        if len(parts) != 2:
+                            print(f"跳过格式错误行: {line}")
+                            continue
+                        fname, label = parts
+                    
+                    if remove_blank:
+                        label = label.strip()
+                    else:
+                        label = ' ' + label.strip() + ' '
+                    
+                    # 检查是否需要跳过
+                    need_skip = False
+                    for ch in skip_chars:
+                        if ch in label:
+                            need_skip = True
+                            break
+                    if need_skip:
+                        print(f"跳过样本: {fname} (标签中包含 '{ch}')")
+                        continue
+                        
                     self.files.append(fname)
                     self.labels.append(label)
-        self.txtline_len = len(self.labels)
-        for info_name in self.info_filename_fullimg:
-            with open(info_name) as f:
-                content = f.readlines()
-                for line in content:
-                    fname,label,left, top, right, bottom = line.strip().split('\t')
-                    self.files.append(fname)
-                    self.labels.append(label)
-                    self.locs.append([int(left),int(top),int(right),int(bottom)])
-        print(len(self.labels),len(self.files))
+                    
     def name(self):
         return 'MyDatasetPro'
 

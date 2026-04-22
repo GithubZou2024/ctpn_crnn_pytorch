@@ -14,22 +14,31 @@ import config
 from online_test import val_model
 import os
 import datetime
+import csv
+from datetime import datetime
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+# 注释掉这行，让程序自动选择GPU
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-log_filename = os.path.join('/kaggle/working/ctpn_crnn_pytorch/train_code/train_crnn/log/','loss_acc-'+config.saved_model_prefix + '.log')
-if not os.path.exists('/kaggle/working/ctpn_crnn_pytorch/train_code/train_crnn/debug_files'):
-    os.mkdir('/kaggle/working/ctpn_crnn_pytorch/train_code/train_crnn/debug_files')
-if not os.path.exists(config.saved_model_dir):
-    os.mkdir(config.saved_model_dir)
-if config.use_log and not os.path.exists('/kaggle/working/ctpn_crnn_pytorch/train_code/train_crnn/log'):
-    os.mkdir('/kaggle/working/ctpn_crnn_pytorch/train_code/train_crnn/log')
+# ========== 目录初始化（使用 config 中的路径）==========
+# 日志文件路径（使用 config.log_dir）
+log_filename = os.path.join(config.log_dir, 'loss_acc-' + config.saved_model_prefix + '.log')
+
+# debug 目录
+debug_dir = '/kaggle/working/ctpn_crnn_pytorch/train_code/train_crnn/debug_files'
+os.makedirs(debug_dir, exist_ok=True)
+
+# 确保目录存在（exist_ok=True 避免重复创建报错）
+os.makedirs(config.saved_model_dir, exist_ok=True)
+os.makedirs(config.log_dir, exist_ok=True)
+
+# 清理旧日志
 if config.use_log and os.path.exists(log_filename):
     os.remove(log_filename)
-if config.experiment is None:
-    config.experiment = 'expr'
-if not os.path.exists(config.experiment):
-    os.mkdir(config.experiment)
+
+# experiment 目录（如果不需要可以删除）
+if config.experiment:
+    os.makedirs(config.experiment, exist_ok=True)
 
 config.manualSeed = random.randint(1, 10000)
 print("Random Seed: ", config.manualSeed)
@@ -54,10 +63,15 @@ test_dataset = mydataset.MyDataset(
     info_filename=config.val_infofile, transform=mydataset.resizeNormalize((config.imgW, config.imgH), is_test=True))
 
 converter = utils.strLabelConverter(config.alphabet)
-criterion = CTCLoss(reduction='sum',zero_infinity=True)
-# criterion = CTCLoss()
+criterion = CTCLoss(reduction='sum', zero_infinity=True)
 best_acc = 0.9
 
+# ========== 添加 loss 记录文件 ==========
+loss_log_path = os.path.join(config.log_dir, 'training_loss.csv')
+with open(loss_log_path, 'w', newline='') as f:
+    writer = csv.writer(f)
+    writer.writerow(['epoch', 'batch', 'batch_idx', 'total_batches', 'loss', 'timestamp', 'type'])
+print(f"Loss 记录将保存到: {loss_log_path}")
 
 # custom weights initialization called on crnn
 def weights_init(m):
@@ -70,28 +84,25 @@ def weights_init(m):
 
 
 crnn = crnn.CRNN(config.imgH, config.nc, config.nclass, config.nh)
-if config.pretrained_model!='' and os.path.exists(config.pretrained_model):
+if config.pretrained_model and os.path.exists(config.pretrained_model):
     print('loading pretrained model from %s' % config.pretrained_model)
-    crnn.load_state_dict(torch.load(config.pretrained_model))
+    state_dict = torch.load(config.pretrained_model, map_location='cpu')
+    crnn.load_state_dict(state_dict, strict=False)
 else:
+    print('no pretrained model, training from scratch')
     crnn.apply(weights_init)
 
 print(crnn)
 
-# image = torch.FloatTensor(config.batchSize, 3, config.imgH, config.imgH)
-# text = torch.IntTensor(config.batchSize * 5)
-# length = torch.IntTensor(config.batchSize)
+# ========== 多GPU支持 ==========
 device = config.device
 if config.cuda:
-    crnn.cuda()
-    # crnn = torch.nn.DataParallel(crnn, device_ids=range(opt.ngpu))
-    # image = image.cuda()
-    device = torch.device('cuda:0')
-    criterion = criterion.cuda()
-
-# image = Variable(image)
-# text = Variable(text)
-# length = Variable(length)
+    crnn = crnn.to(device)
+    if config.ngpu > 1:
+        print(f"启用 DataParallel，使用 {config.ngpu} 个GPU")
+        crnn = torch.nn.DataParallel(crnn)
+    criterion = criterion.to(device)
+    print(f"模型已加载到 {device}")
 
 # loss averager
 loss_avg = utils.averager()
@@ -105,41 +116,57 @@ else:
     optimizer = optim.RMSprop(crnn.parameters(), lr=config.lr)
 
 
-def val(net, dataset, criterion, max_iter=100):
+def val(net, dataset, criterion, max_iter=100, current_epoch=0):
     print('Start val')
     for p in net.parameters():
         p.requires_grad = False
 
-    num_correct,  num_all = val_model(config.val_infofile,net,True,log_file='compare-'+config.saved_model_prefix+'.log')
-    accuracy = num_correct / num_all
+    # 如果是 DataParallel 包装的，取 .module
+    if isinstance(net, torch.nn.DataParallel):
+        net_to_val = net.module
+    else:
+        net_to_val = net
+    
+    num_correct, num_all = val_model(config.val_infofile, net_to_val, True, log_file='compare-'+config.saved_model_prefix+'.log')
+    accuracy = num_correct / num_all if num_all > 0 else 0
 
     print('ocr_acc: %f' % (accuracy))
     if config.use_log:
         with open(log_filename, 'a') as f:
             f.write('ocr_acc:{}\n'.format(accuracy))
+    
     global best_acc
     if accuracy > best_acc:
         best_acc = accuracy
-        torch.save(crnn.state_dict(), '{}/{}_{}_{}.pth'.format(config.saved_model_dir, config.saved_model_prefix, epoch,
-                                                               int(best_acc * 1000)))
-    torch.save(crnn.state_dict(), '{}/{}.pth'.format(config.saved_model_dir, config.saved_model_prefix))
+        model_to_save = net.module if isinstance(net, torch.nn.DataParallel) else net
+        torch.save(model_to_save.state_dict(), '{}/{}_{}_{}.pth'.format(config.saved_model_dir, config.saved_model_prefix, current_epoch, int(best_acc * 1000)))
+    
+    # 定期保存模型
+    model_to_save = net.module if isinstance(net, torch.nn.DataParallel) else net
+    torch.save(model_to_save.state_dict(), '{}/{}.pth'.format(config.saved_model_dir, config.saved_model_prefix))
+    
+    # 返回准确率
+    return accuracy
 
 
-def trainBatch(net, criterion, optimizer):
+def trainBatch(net, criterion, optimizer, train_iter, converter, device):
     data = next(train_iter)
     cpu_images, cpu_texts = data
     batch_size = cpu_images.size(0)
     image = cpu_images.to(device)
 
     text, length = converter.encode(cpu_texts)
-    # utils.loadData(text, t)
-    # utils.loadData(length, l)
-
-    preds = net(image)  # seqLength x batchSize x alphabet_size
-    preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))  # seqLength x batchSize
-    cost = criterion(preds.log_softmax(2).cpu(), text, preds_size, length) / batch_size
+    
+    preds = net(image)
+    preds_size = torch.IntTensor([preds.size(0)] * batch_size)
+    if config.cuda:
+        preds_size = preds_size.to(device)
+    
+    cost = criterion(preds.log_softmax(2), text, preds_size, length) / batch_size
+    
     if torch.isnan(cost):
-        print(batch_size,cpu_texts)
+        print(batch_size, cpu_texts)
+        return None
     else:
         net.zero_grad()
         cost.backward()
@@ -147,24 +174,70 @@ def trainBatch(net, criterion, optimizer):
     return cost
 
 
+# ========== 训练循环 ==========
 for epoch in range(config.niter):
     loss_avg.reset()
     print('epoch {}....'.format(epoch))
     train_iter = iter(train_loader)
     i = 0
     n_batch = len(train_loader)
+    
+    # 记录 epoch 开始时间
+    epoch_start_time = datetime.now()
+    
     while i < len(train_loader):
         for p in crnn.parameters():
             p.requires_grad = True
         crnn.train()
-        cost = trainBatch(crnn, criterion, optimizer)
-        print('epoch: {} iter: {}/{} Train loss: {:.3f}'.format(epoch, i, n_batch, cost.item()))
-        loss_avg.add(cost)
+        cost = trainBatch(crnn, criterion, optimizer, train_iter, converter, device)
+        if cost is not None:
+            loss_value = cost.item()
+            print('epoch: {} iter: {}/{} Train loss: {:.6f}'.format(epoch, i, n_batch, loss_value))
+            loss_avg.add(cost)
+            
+            # 记录每个 batch 的 loss
+            with open(loss_log_path, 'a', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([
+                    epoch, i, i, n_batch,
+                    f"{loss_value:.6f}",
+                    datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    'batch'
+                ])
         i += 1
-    print('Train loss: %f' % (loss_avg.val()))
+    
+    epoch_end_time = datetime.now()
+    epoch_duration = (epoch_end_time - epoch_start_time).total_seconds()
+    
+    avg_loss = loss_avg.val()
+    print('Epoch {} finished, Train loss: {:.6f}, Duration: {:.2f}s'.format(epoch, avg_loss, epoch_duration))
+    
+    # 记录每个 epoch 的平均 loss
+    with open(loss_log_path, 'a', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            epoch, -1, -1, n_batch,
+            f"{avg_loss:.6f}",
+            datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'epoch'
+        ])
+    
     if config.use_log:
         with open(log_filename, 'a') as f:
-            f.write('{}\n'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')))
-            f.write('train_loss:{}\n'.format(loss_avg.val()))
+            f.write('{}\n'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')))
+            f.write('train_loss:{}\n'.format(avg_loss))
 
-    val(crnn, test_dataset, criterion)
+    # 验证并记录验证准确率
+    val_acc = val(crnn, test_dataset, criterion, current_epoch=epoch)
+    
+    # 记录验证结果
+    with open(loss_log_path, 'a', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            epoch, -1, -1, n_batch,
+            f"{val_acc:.6f}",
+            datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'val_acc'
+        ])
+
+print(f"\n训练完成！Loss 记录已保存到: {loss_log_path}")

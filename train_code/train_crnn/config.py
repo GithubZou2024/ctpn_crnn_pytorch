@@ -23,9 +23,9 @@ else:# 本地CPU/Windows环境
     print("运行在本地CPU环境")
 
 # 路径配置 - get_path会自动处理路径映射
-train_infofile = get_path('/kaggle/input/datasets/zouhahaha/recognition/ch4_training_word_images_gt/ch4_training_word_images_gt.txt')
+train_infofile = get_path('/kaggle/input/datasets/ravi02516/20k-synthetic-ocr-dataset/train.csv')
 train_infofile_fullimg = None  # 如果没有就设为None
-val_infofile = get_path('/kaggle/input/datasets/zouhahaha/recognition/ch4_test_word_images_gt/ch4_test_word_images_gt.txt')
+val_infofile = get_path('/kaggle/input/datasets/ravi02516/20k-synthetic-ocr-dataset/test.csv')
 
 # 预训练模型路径 - get_path会自动处理Kaggle和本地的路径映射
 # /kaggle/input/datasets/zouhahaha/pretrained-crnn/CRNN-1010.pth
@@ -48,17 +48,17 @@ lr = 0.0005
 beta1 = 0.5
 
 # 保存目录
-saved_model_dir = get_path('/kaggle/working/ctpn_crnn_pytorch/checkpoints')
+saved_model_dir = get_path('/kaggle/working/checkpoints')
 if saved_model_dir and not os.path.exists(saved_model_dir):
     os.makedirs(saved_model_dir, exist_ok=True)
     print(f"创建目录: {saved_model_dir}")
 # 添加 log_dir
-log_dir = get_path('/kaggle/working/ctpn_crnn_pytorch/logs')
+log_dir = get_path('/kaggle/working/logs')
 if log_dir and not os.path.exists(log_dir):
     os.makedirs(log_dir, exist_ok=True)
     print(f"创建目录: {log_dir}")
 
-saved_model_prefix = 'CRNN-'
+saved_model_prefix = 'CRNN-synthetic'
 
 # 其他配置
 use_log = False
