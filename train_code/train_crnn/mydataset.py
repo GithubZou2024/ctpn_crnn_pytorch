@@ -222,21 +222,26 @@ class MyDatasetPro(Dataset):
                     line = line.strip()
                     if not line:
                         continue
-                        
+                    # 处理数据行  
                     if '\t' in line:
                         fname, label = line.split('\t')
-                    else:
-                        # 处理 CSV 逗号分隔
-                        parts = line.split(',', 1)
+                    elif ',' in line:
+                        # 处理 CSV 格式：img_0.jpg,V3ITMTB1
+                        parts = line.strip().split(',', 1)
                         if len(parts) != 2:
                             print(f"跳过格式错误行: {line}")
                             continue
                         fname, label = parts
-                    
-                    if remove_blank:
-                        label = label.strip()
+                        # 添加图片路径前缀
+                        fname = f"images/{fname}"
                     else:
-                        label = ' ' + label.strip() + ' '
+                        # 处理原来的 g: 格式
+                        if 'g:' in line:
+                            fname, label = line.split('g:')
+                            fname += 'g'
+                        else:
+                            print(f"跳过无法识别的行: {line}")
+                            continue
                     
                     # 检查是否需要跳过
                     need_skip = False
