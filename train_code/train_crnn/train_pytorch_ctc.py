@@ -103,6 +103,9 @@ if config.cuda:
         crnn = torch.nn.DataParallel(crnn)
     criterion = criterion.to(device)
     print(f"模型已加载到 {device}")
+# 在创建模型后添加
+print(f"Model type: {type(crnn)}")
+print(f"Is DataParallel: {isinstance(crnn, torch.nn.DataParallel)}")
 
 # loss averager
 loss_avg = utils.averager()
@@ -158,12 +161,22 @@ def trainBatch(net, criterion, optimizer, train_iter, converter, device):
     
     preds = net(image)
     
-    # 关键修改：使用 preds 的实际 batch_size
+    # 获取实际 batch size
     actual_batch_size = preds.size(1)
     
-    # 只取前 actual_batch_size 个标签（因为 DataParallel 会拆分）
-    text = text[:actual_batch_size]
-    length = length[:actual_batch_size]
+    print(f"Debug: cpu_images batch size: {cpu_images.size(0)}")
+    print(f"Debug: preds batch size: {actual_batch_size}")
+    print(f"Debug: text length: {len(text)}")
+    print(f"Debug: length length: {len(length)}")
+    
+    # 确保 text 和 length 与 preds 的 batch size 匹配
+    if len(text) > actual_batch_size:
+        text = text[:actual_batch_size]
+        length = length[:actual_batch_size]
+    elif len(text) < actual_batch_size:
+        # 这种情况不应该发生，但为了安全
+        print(f"Warning: text length {len(text)} < actual_batch_size {actual_batch_size}")
+        return None
     
     text = text.to(device)
     length = length.to(device)
@@ -172,6 +185,12 @@ def trainBatch(net, criterion, optimizer, train_iter, converter, device):
     preds_size = torch.full((actual_batch_size,), seq_len, dtype=torch.int32, device=device)
     
     log_probs = preds.log_softmax(2)
+    
+    # 添加额外的安全检查
+    if torch.isnan(log_probs).any():
+        print("NaN in log_probs")
+        return None
+        
     cost = criterion(log_probs, text, preds_size, length) / actual_batch_size
     
     if torch.isnan(cost):
