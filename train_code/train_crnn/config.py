@@ -45,7 +45,7 @@ nclass = len(alphabet) + 1
 nh = 256
 
 # 训练参数
-niter = 100
+niter = 75
 lr = 0.0005
 beta1 = 0.5
 
