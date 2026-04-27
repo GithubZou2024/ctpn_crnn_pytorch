@@ -97,7 +97,7 @@ class strLabelConverter(object):
 
 # recognize api
 class PytorchOcr():
-    def __init__(self, model_path='checkpoints/CRNN-1010.pth'):
+    def __init__(self, model_path='checkpoints/CRNN.pth'):
         alphabet_unicode = config.alphabet_v2
         self.alphabet = ''.join([chr(uni) for uni in alphabet_unicode])
         # print(len(self.alphabet))
