@@ -32,5 +32,5 @@ RPN_TOTAL_NUM = 300
 IMAGE_MEAN = [123.68, 116.779, 103.939]
 
 
-checkpoints_dir = './checkpoints'
+checkpoints_dir = '/kaggle/input/datasets/zouhahaha/pretrainedweight'
 outputs = r'./logs'
