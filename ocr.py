@@ -70,9 +70,117 @@ def charRec(img, text_recs, adjust=False):
 
     return results
 
-def ocr(image):
-    # detect
+def enhance_image(image):
+    """图像增强，提高 CTPN 检测率"""
+    import cv2
+    import numpy as np
+    
+    # 转为灰度
+    if len(image.shape) == 3:
+        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    else:
+        gray = image
+    
+    # 1. 直方图均衡化（增强对比度）
+    gray = cv2.equalizeHist(gray)
+    
+    # 2. 二值化（可选，根据情况）
+    # _, gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    
+    # 3. 降噪
+    gray = cv2.medianBlur(gray, 3)
+    
+    # 转回 RGB
+    enhanced = cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB)
+    
+    return enhanced
+
+def pad_to_size(image, target_height=600, target_width=None):
+    """
+    保持原图比例，四周填充到目标尺寸
+    Args:
+        image: 输入图片
+        target_height: 目标高度
+        target_width: 目标宽度（如果不指定，按原图宽高比计算）
+    Returns:
+        padded: 填充后的图片
+        scale: 缩放比例（这里是1，因为没有缩放）
+        pad_top, pad_left: 填充的尺寸（用于映射坐标）
+    """
+    h, w = image.shape[:2]
+    
+    # 如果不指定宽度，按原图宽高比计算目标宽度
+    if target_width is None:
+        target_width = int(w * (target_height / h))
+    
+    # 计算缩放比例（保持原图不变，只是填充）
+    scale_w = target_width / w
+    scale_h = target_height / h
+    scale = min(scale_w, scale_h)  # 取较小的比例，确保图片完整
+    
+    # 缩放图片（如果比例不是1）
+    if scale != 1:
+        new_w = int(w * scale)
+        new_h = int(h * scale)
+        image = cv2.resize(image, (new_w, new_h))
+    else:
+        new_w, new_h = w, h
+    
+    # 计算填充
+    pad_top = (target_height - new_h) // 2
+    pad_bottom = target_height - new_h - pad_top
+    pad_left = (target_width - new_w) // 2
+    pad_right = target_width - new_w - pad_left
+    
+    # 填充（用白色或黑色）
+    padded = cv2.copyMakeBorder(
+        image, 
+        pad_top, pad_bottom, pad_left, pad_right,
+        cv2.BORDER_CONSTANT, 
+        value=(255, 255, 255)  # 白色填充
+    )
+    
+    return padded, scale, pad_left, pad_top
+
+
+def ocr(image, target_height=600):
+    """OCR 主函数（使用填充而不是缩放）"""
+    # 预处理
+    if not isinstance(image, np.ndarray):
+        image = np.array(image)
+    
+    # 图像增强
+    # image = enhance_image(image)
+    
+    # 保持原图比例，填充到目标尺寸
+    image, scale, pad_left, pad_top = pad_to_size(image, target_height=target_height)
+    
+    # 检测
     text_recs, img_framed, image = get_det_boxes(image)
+    
+    # 把检测框坐标映射回原图（减去填充偏移）
+    if scale != 1.0 or pad_left != 0 or pad_top != 0:
+        try:
+            if text_recs and len(text_recs) > 0:
+                new_text_recs = []
+                for box in text_recs:
+                    # 减去填充，除以缩放比例
+                    new_box = [
+                        int((box[0] - pad_left) / scale),
+                        int((box[1] - pad_top) / scale),
+                        int((box[2] - pad_left) / scale),
+                        int((box[3] - pad_top) / scale),
+                        int((box[4] - pad_left) / scale),
+                        int((box[5] - pad_top) / scale),
+                        int((box[6] - pad_left) / scale),
+                        int((box[7] - pad_top) / scale),
+                    ]
+                    new_text_recs.append(new_box)
+                text_recs = new_text_recs
+        except:
+            pass
+    
     text_recs = sort_box(text_recs)
     result = charRec(image, text_recs)
+    
     return result, img_framed

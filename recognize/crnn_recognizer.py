@@ -9,6 +9,7 @@ import numpy as np
 import random
 from recognize.crnn import CRNN
 from recognize import config
+from path_utils import get_path
 
 # copy from mydataset
 class resizeNormalize(object):
@@ -97,7 +98,7 @@ class strLabelConverter(object):
 
 # recognize api
 class PytorchOcr():
-    def __init__(self, model_path='/kaggle/input/datasets/zouhahaha/pretrainedweight/CRNN.pth'):
+    def __init__(self, model_path=get_path('/kaggle/input/datasets/zouhahaha/pretrainedweight/CRNN.pth')):
         alphabet_unicode = config.alphabet_v2
         self.alphabet = ''.join([chr(uni) for uni in alphabet_unicode])
         # print(len(self.alphabet))

@@ -2,7 +2,7 @@ import keys
 import os
 import torch
 import platform
-from path_utils import get_path
+from working.ctpn_crnn_pytorch.path_utils import get_path
 
 # 根据环境自动调整配置
 IS_KAGGLE = 'KAGGLE_KERNEL_RUN_TYPE' in os.environ

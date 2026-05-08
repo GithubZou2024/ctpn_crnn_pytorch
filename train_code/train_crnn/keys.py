@@ -1,5 +1,5 @@
 import pickle as pkl
-from path_utils import get_path
+from working.ctpn_crnn_pytorch.path_utils import get_path
 # gen alphabet via label
 # alphabet_set = set()
 # infofiles = ['infofiles/infofile_selfcollect.txt','infofiles/infofile_train_public.txt']

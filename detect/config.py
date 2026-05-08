@@ -6,6 +6,8 @@
 #'''
 import os
 
+from path_utils import get_path
+
 # base_dir = 'path to dataset base dir'
 base_dir = './images'
 img_dir = os.path.join(base_dir, 'VOC2007_text_detection/JPEGImages')
@@ -32,5 +34,5 @@ RPN_TOTAL_NUM = 300
 IMAGE_MEAN = [123.68, 116.779, 103.939]
 
 
-checkpoints_dir = '/kaggle/input/datasets/zouhahaha/pretrainedweight'
+checkpoints_dir = get_path('/kaggle/input/datasets/zouhahaha/pretrainedweight')
 outputs = r'./logs'
