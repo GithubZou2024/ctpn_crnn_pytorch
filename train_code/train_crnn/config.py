@@ -22,12 +22,12 @@ else:# 本地CPU/Windows环境
     print("运行在本地CPU环境")
 
 # 路径配置 - get_path会自动处理路径映射
-train_infofile = get_path('/kaggle/input/datasets/ravi02516/20k-synthetic-ocr-dataset/train.csv')
+train_infofile = get_path('/kaggle/input/datasets/zouhahaha/ocr-chinese/Chinese_dataset/lables_f.txt')
 train_infofile_fullimg = None  # 如果没有就设为None
-val_infofile = get_path('/kaggle/input/datasets/ravi02516/20k-synthetic-ocr-dataset/test.csv')
+val_infofile = get_path('/kaggle/input/datasets/zouhahaha/recognition/ch4_test_word_images_gt/ch4_test_word_images_gt.txt')
 # 图片目录配置
-train_img_dir = '/kaggle/input/datasets/ravi02516/20k-synthetic-ocr-dataset/files/20k train'
-val_img_dir = '/kaggle/input/datasets/ravi02516/20k-synthetic-ocr-dataset/files/20k test'
+train_img_dir = '/kaggle/input/datasets/zouhahaha/ocr-chinese/Chinese_dataset/images'
+val_img_dir = '/kaggle/input/datasets/zouhahaha/recognition/ch4_test_word_images_gt'
 
 # 预训练模型路径 - get_path会自动处理Kaggle和本地的路径映射
 # /kaggle/input/datasets/zouhahaha/pretrained-crnn/CRNN-1010.pth
