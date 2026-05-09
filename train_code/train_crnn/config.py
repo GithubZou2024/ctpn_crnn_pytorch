@@ -31,7 +31,7 @@ val_img_dir = '/kaggle/input/datasets/ravi02516/20k-synthetic-ocr-dataset/files/
 
 # 预训练模型路径 - get_path会自动处理Kaggle和本地的路径映射
 # /kaggle/input/datasets/zouhahaha/pretrained-crnn/CRNN-1010.pth
-pretrained_model = get_path('/kaggle/input/datasets/zouhahaha/pretrained-crnn/CRNN-1010.pth')
+pretrained_model = get_path('/kaggle/input/datasets/zouhahaha/pretrained-crnn2/CRNN.pth')
 
 # 字母表配置
 alphabet = keys.alphabet
