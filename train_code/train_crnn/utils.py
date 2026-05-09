@@ -114,35 +114,46 @@ class strLabelConverter(object):
 
     def encode(self, text):
         """Support batch or single str.
-
+        
         Args:
             text (str or list of str): texts to convert.
-
+        
         Returns:
             torch.IntTensor [length_0 + length_1 + ... length_{n - 1}]: encoded texts.
             torch.IntTensor [n]: length of each text.
         """
-        # print(text)
-        try:
-            if isinstance(text, str):
-                # for char in text:
-                #     print(char)
-                text = [
-                    self.dict[ord(char.lower() if self._ignore_case else char)]
-                    for char in text# if char in self.dict.keys()
-                ]
-                length = [len(text)]
-            elif isinstance(text, collections.abc.Iterable):
-                length = [len(s) for s in text]
-                text = ''.join(text)
-                text, _ = self.encode(text)
-        except KeyError as e:
-            # print(text)
-            print(e)
-            for ch in text:
-                if ord(ch) not in self.dict.keys():
-                    print('Not Covering Char: {} - {}'.format(ch,ord(ch)))
-        return (torch.IntTensor(text), torch.IntTensor(length))
+        if isinstance(text, str):
+            encoded_chars = []
+            skipped_chars = set()
+            
+            for char in text:
+                key = ord(char.lower() if self._ignore_case else char)
+                if key in self.dict:
+                    encoded_chars.append(self.dict[key])
+                else:
+                    if char not in skipped_chars:
+                        print(f'Not Covering Char: {char} - {key}')
+                        skipped_chars.add(char)
+                    # 跳过未知字符
+                    continue
+            
+            text = encoded_chars
+            length = [len(text)]
+            
+        elif isinstance(text, collections.abc.Iterable):
+            # 处理列表
+            all_encoded = []
+            lengths = []
+            
+            for s in text:
+                encoded, lens = self.encode(s)
+                # 将张量转换为列表追加
+                all_encoded.extend(encoded.tolist() if hasattr(encoded, 'tolist') else encoded)
+                lengths.append(lens[0].item() if hasattr(lens[0], 'item') else lens[0])
+            
+            return torch.IntTensor(all_encoded), torch.IntTensor(lengths)
+        
+        return torch.IntTensor(text), torch.IntTensor(length)
 
     def decode(self, t, length, raw=False):
         """Decode encoded texts back into strs.
