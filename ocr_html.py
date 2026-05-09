@@ -139,11 +139,11 @@ HTML_TEMPLATE = '''
 </head>
 <body>
     <div class="container">
-        <h1>📄 OCR 文字识别系统</h1>
+        <h1>OCR 文字识别系统</h1>
         <div class="subtitle">基于 PyTorch CTPN + CRNN | 支持中英文识别</div>
         
         <div class="upload-area" id="uploadArea">
-            <div>📸 点击或拖拽上传图片</div>
+            <div>点击或拖拽上传图片</div>
             <div style="font-size: 12px; color: #999; margin-top: 10px;">支持 JPG、PNG 格式</div>
             <input type="file" id="fileInput" accept="image/*" style="display: none;">
         </div>
@@ -158,15 +158,15 @@ HTML_TEMPLATE = '''
                 <h3>识别结果图片</h3>
                 <img id="resultImage" class="result-image" alt="识别结果">
                 <div class="btn-group">
-                    <button onclick="downloadImage()">💾 下载图片</button>
+                    <button onclick="downloadImage()">下载图片</button>
                 </div>
             </div>
             <div class="text-box">
                 <h3>识别文字</h3>
                 <div id="recognizedText" class="recognized-text"></div>
                 <div class="btn-group">
-                    <button onclick="copyText()">📋 复制文字</button>
-                    <button onclick="downloadText()">💾 下载文字</button>
+                    <button onclick="copyText()">复制文字</button>
+                    <button onclick="downloadText()">下载文字</button>
                 </div>
             </div>
         </div>

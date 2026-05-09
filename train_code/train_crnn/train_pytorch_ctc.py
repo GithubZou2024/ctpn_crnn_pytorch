@@ -148,6 +148,11 @@ def val(net, dataset, criterion, max_iter=100, current_epoch=0):
     model_to_save = net.module if isinstance(net, torch.nn.DataParallel) else net
     torch.save(model_to_save.state_dict(), '{}/{}.pth'.format(config.saved_model_dir, config.saved_model_prefix))
     
+    # 在 val() 函数末尾，定期保存快照
+    if current_epoch % 5 == 0:
+        torch.save(model_to_save.state_dict(), 
+                '{}/{}_{}.pth'.format(config.saved_model_dir, config.saved_model_prefix, current_epoch))
+    
     # 返回准确率
     return accuracy
 
