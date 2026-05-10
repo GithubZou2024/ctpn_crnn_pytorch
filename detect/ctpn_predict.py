@@ -52,7 +52,9 @@ def dis(image):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-def get_det_boxes(image, ctpn_weight_path=None, display=True, expand=True):
+def get_det_boxes(image, 
+                  ctpn_weight_path=r"E:\programming\share\python\kaggle\working\ctpn_crnn_pytorch\checkpoints\CTPN.pth",
+                  display=True, expand=True):
     """获取检测框，支持指定CTPN权重路径"""
     # 获取模型（支持动态加载）
     model = get_model(ctpn_weight_path)

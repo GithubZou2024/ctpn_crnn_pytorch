@@ -19,40 +19,40 @@ HTML_TEMPLATE = '''
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #e8f4f8;
             min-height: 100vh;
             padding: 20px;
         }
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            background: white;
+            background: #ffffff;
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
         }
         h1 {
-            color: #333;
+            color: black;
             margin-bottom: 10px;
         }
         .subtitle {
             color: #666;
             margin-bottom: 30px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #7fcdff;
             padding-left: 15px;
         }
         .upload-area {
-            border: 2px dashed #ccc;
+            border: 2px dashed #b0d4e8;
             border-radius: 15px;
             padding: 40px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
-            background: #f9f9f9;
+            background: #f0f9ff;
         }
         .upload-area:hover {
-            border-color: #667eea;
-            background: #f0f0ff;
+            border-color: #7fcdff;
+            background: #e0f2fe;
         }
         .result-area {
             display: flex;
@@ -65,13 +65,13 @@ HTML_TEMPLATE = '''
             min-width: 300px;
         }
         .image-box {
-            background: #f5f5f5;
+            background: #f0f9ff;
             border-radius: 15px;
             padding: 20px;
             text-align: center;
         }
         .text-box {
-            background: #f5f5f5;
+            background: #f0f9ff;
             border-radius: 15px;
             padding: 20px;
         }
@@ -81,7 +81,7 @@ HTML_TEMPLATE = '''
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         .recognized-text {
-            background: white;
+            background: #ffffff;
             padding: 20px;
             border-radius: 10px;
             font-family: monospace;
@@ -91,29 +91,32 @@ HTML_TEMPLATE = '''
             max-height: 400px;
             overflow-y: auto;
             margin: 15px 0;
+            border: 1px solid #cce7f0;
         }
         button {
-            background: #667eea;
-            color: white;
+            background: #7fcdff;
+            color: black;
             border: none;
             padding: 12px 30px;
             border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
             margin-top: 10px;
+            font-weight: bold;
         }
         button:hover {
-            background: #5a67d8;
+            background: #5bbce8;
+            color: #ffffff;
         }
         .loading {
             display: none;
             text-align: center;
             padding: 20px;
-            color: #667eea;
+            color: #5a9bb5;
         }
         .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border: 3px solid #e0f2fe;
+            border-top: 3px solid #7fcdff;
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -128,12 +131,18 @@ HTML_TEMPLATE = '''
             display: flex;
             gap: 10px;
             margin-top: 15px;
+            justify-content: center;
         }
         .btn-clear {
-            background: #ccc;
+            background: #cce7f0;
+            color: #5a9bb5;
         }
         .btn-clear:hover {
-            background: #bbb;
+            background: #b0d4e8;
+        }
+        h3 {
+            color: #333;
+            margin-bottom: 15px;
         }
     </style>
 </head>
@@ -144,7 +153,7 @@ HTML_TEMPLATE = '''
         
         <div class="upload-area" id="uploadArea">
             <div>点击或拖拽上传图片</div>
-            <div style="font-size: 12px; color: #999; margin-top: 10px;">支持 JPG、PNG 格式</div>
+            <div style="font-size: 12px; color: #333; margin-top: 10px;">支持 JPG、PNG 格式</div>
             <input type="file" id="fileInput" accept="image/*" style="display: none;">
         </div>
         
@@ -186,16 +195,19 @@ HTML_TEMPLATE = '''
         
         uploadArea.ondragover = (e) => {
             e.preventDefault();
-            uploadArea.style.borderColor = '#667eea';
+            uploadArea.style.borderColor = '#7fcdff';
+            uploadArea.style.background = '#e0f2fe';
         };
         
         uploadArea.ondragleave = () => {
-            uploadArea.style.borderColor = '#ccc';
+            uploadArea.style.borderColor = '#b0d4e8';
+            uploadArea.style.background = '#f0f9ff';
         };
         
         uploadArea.ondrop = async (e) => {
             e.preventDefault();
-            uploadArea.style.borderColor = '#ccc';
+            uploadArea.style.borderColor = '#b0d4e8';
+            uploadArea.style.background = '#f0f9ff';
             const file = e.dataTransfer.files[0];
             if (file) await uploadImage(file);
         };
@@ -272,14 +284,11 @@ def ocr_process():
         image = Image.open(file.stream).convert('RGB')
         image_np = np.array(image)
         
-        # 调用您的 OCR 函数
         result, image_framed = ocr(image_np)
         
-        # 编码图片为 base64
         _, buffer = cv2.imencode('.jpg', image_framed)
         image_base64 = base64.b64encode(buffer).decode()
         
-        # 提取所有文字
         texts = []
         for key in result:
             text = result[key][1]
@@ -295,19 +304,15 @@ def ocr_process():
         return jsonify({'success': False, 'error': str(e)})
 
 if __name__ == '__main__':
-    # 自动打开浏览器
     def open_browser():
         webbrowser.open('http://127.0.0.1:5000')
     
     print("\n" + "="*50)
-    print("🚀 OCR Web 服务启动中...")
+    print("OCR Web 服务启动中...")
     print("="*50)
-    print("📱 请在浏览器中打开: http://127.0.0.1:5000")
-    print("🔄 服务运行中，按 Ctrl+C 停止")
+    print("请在浏览器中打开: http://127.0.0.1:5000")
+    print("服务运行中，按 Ctrl+C 停止")
     print("="*50 + "\n")
     
-    # 延迟1秒打开浏览器
     threading.Timer(1, open_browser).start()
-    
-    # 启动服务器
     app.run(debug=False, host='127.0.0.1', port=5000)
