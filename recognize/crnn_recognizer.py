@@ -98,7 +98,16 @@ class strLabelConverter(object):
 
 # recognize api
 class PytorchOcr():
-    def __init__(self, model_path=get_path('/kaggle/input/datasets/zouhahaha/pretrainedweight/CRNN.pth')):
+    def __init__(self, model_path=None):
+        """
+        初始化OCR识别器
+        Args:
+            model_path: CRNN模型权重路径，如果为None则使用默认路径
+        """
+        if model_path is None:
+            model_path = get_path('/kaggle/input/datasets/zouhahaha/pretrainedweight/CRNN.pth')
+        
+        print(f"加载CRNN模型: {model_path}")
         alphabet_unicode = config.alphabet_v2
         self.alphabet = ''.join([chr(uni) for uni in alphabet_unicode])
         # print(len(self.alphabet))
@@ -108,10 +117,17 @@ class PytorchOcr():
         if torch.cuda.is_available():
             self.cuda = True
             self.model.cuda()
-            self.model.load_state_dict({k.replace('module.', ''): v for k, v in torch.load(model_path).items()})
+            state_dict = torch.load(model_path)
+            # 处理可能的module.前缀
+            if 'module.' in list(state_dict.keys())[0]:
+                state_dict = {k.replace('module.', ''): v for k, v in state_dict.items()}
+            self.model.load_state_dict(state_dict)
         else:
             # self.model = nn.DataParallel(self.model)
-            self.model.load_state_dict(torch.load(model_path, map_location='cpu'))
+            state_dict = torch.load(model_path, map_location='cpu')
+            if 'module.' in list(state_dict.keys())[0]:
+                state_dict = {k.replace('module.', ''): v for k, v in state_dict.items()}
+            self.model.load_state_dict(state_dict)
         self.model.eval()
         self.converter = strLabelConverter(self.alphabet)
 
@@ -140,14 +156,20 @@ class PytorchOcr():
 
 
 if __name__ == '__main__':
-    model_path = './recognize/crnn_models/CRNN-1008.pth'
-    recognizer = PytorchOcr(model_path)
+    # 测试默认模型
+    print("测试默认模型:")
+    recognizer = PytorchOcr()
     img_name = 't1.jpg'
-    img = cv2.imread(img_name)
-    h, w = img.shape[:2]
-    res = recognizer.recognize(img)
-    print(res)
-
-
-
-
+    if os.path.exists(img_name):
+        img = cv2.imread(img_name)
+        res = recognizer.recognize(img)
+        print(f"识别结果: {res}")
+    
+    # 测试指定模型
+    print("\n测试指定模型:")
+    model_path = './recognize/crnn_models/CRNN-1008.pth'
+    if os.path.exists(model_path):
+        recognizer2 = PytorchOcr(model_path)
+        img = cv2.imread(img_name)
+        res = recognizer2.recognize(img)
+        print(f"识别结果: {res}")

@@ -3,11 +3,23 @@ from math import *
 import numpy as np
 from detect.ctpn_predict import get_det_boxes
 from recognize.crnn_recognizer import PytorchOcr
-recognizer = PytorchOcr()
 
-def dis(image):
-    cv2.imshow('image', image)
-    cv2.waitKey(0)
+# 全局变量，用于缓存不同路径的模型
+_recognizer_cache = {}
+
+def get_recognizer(crnn_weight_path=None):
+    """获取OCR识别器，支持动态加载不同权重并缓存"""
+    if crnn_weight_path is None:
+        # 使用默认路径
+        if 'default' not in _recognizer_cache:
+            _recognizer_cache['default'] = PytorchOcr()
+        return _recognizer_cache['default']
+    
+    # 使用指定路径，缓存已加载的模型
+    if crnn_weight_path not in _recognizer_cache:
+        _recognizer_cache[crnn_weight_path] = PytorchOcr(model_path=crnn_weight_path)
+    
+    return _recognizer_cache[crnn_weight_path]
 
 def sort_box(box):
     """
@@ -35,13 +47,20 @@ def dumpRotateImage(img, degree, pt1, pt2, pt3, pt4):
 
     return imgOut
 
-
-def charRec(img, text_recs, adjust=False):
+def charRec(img, text_recs, adjust=False, crnn_weight_path=None):
     """
     加载OCR模型，进行字符识别
+    Args:
+        img: 输入图像
+        text_recs: 文本区域
+        adjust: 是否调整边界
+        crnn_weight_path: CRNN模型权重路径，None则使用默认
     """
     results = {}
     xDim, yDim = img.shape[1], img.shape[0]
+    
+    # 获取识别器（支持指定路径和缓存）
+    recognizer = get_recognizer(crnn_weight_path)
 
     for index, rec in enumerate(text_recs):
         xlength = int((rec[6] - rec[0]) * 0.1)
@@ -142,9 +161,14 @@ def pad_to_size(image, target_height=600, target_width=None):
     
     return padded, scale, pad_left, pad_top
 
-
-def ocr(image, target_height=600):
-    """OCR 主函数（使用填充而不是缩放）"""
+def ocr(image, target_height=600, crnn_weight_path=None):
+    """OCR 主函数（支持指定CRNN权重路径）
+    
+    Args:
+        image: 输入图像
+        target_height: 目标高度
+        crnn_weight_path: CRNN模型权重路径，None则使用默认
+    """
     # 预处理
     if not isinstance(image, np.ndarray):
         image = np.array(image)
@@ -181,6 +205,6 @@ def ocr(image, target_height=600):
             pass
     
     text_recs = sort_box(text_recs)
-    result = charRec(image, text_recs)
+    result = charRec(image, text_recs, crnn_weight_path=crnn_weight_path)
     
     return result, img_framed
