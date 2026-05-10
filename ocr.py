@@ -161,14 +161,8 @@ def pad_to_size(image, target_height=600, target_width=None):
     
     return padded, scale, pad_left, pad_top
 
-def ocr(image, target_height=600, crnn_weight_path=None):
-    """OCR 主函数（支持指定CRNN权重路径）
-    
-    Args:
-        image: 输入图像
-        target_height: 目标高度
-        crnn_weight_path: CRNN模型权重路径，None则使用默认
-    """
+def ocr(image, target_height=600, crnn_weight_path=None, ctpn_weight_path=None):
+    """OCR 主函数（支持指定CRNN和CTPN权重路径）"""
     # 预处理
     if not isinstance(image, np.ndarray):
         image = np.array(image)
@@ -179,8 +173,8 @@ def ocr(image, target_height=600, crnn_weight_path=None):
     # 保持原图比例，填充到目标尺寸
     image, scale, pad_left, pad_top = pad_to_size(image, target_height=target_height)
     
-    # 检测
-    text_recs, img_framed, image = get_det_boxes(image)
+    # 检测（传入CTPN权重路径）
+    text_recs, img_framed, image = get_det_boxes(image, ctpn_weight_path=ctpn_weight_path)
     
     # 把检测框坐标映射回原图（减去填充偏移）
     if scale != 1.0 or pad_left != 0 or pad_top != 0:

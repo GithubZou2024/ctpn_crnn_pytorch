@@ -22,20 +22,41 @@ gpu = True
 if not torch.cuda.is_available():
     gpu = False
 device = torch.device('cuda:0' if gpu else 'cpu')
-weights = os.path.join(config.checkpoints_dir, 'CTPN.pth')
-model = CTPN_Model()
-model.load_state_dict(torch.load(weights, map_location=device)['model_state_dict'])
-model.to(device)
-model.eval()
 
+# 全局变量，用于缓存模型
+_model_cache = {}
+_default_weights = os.path.join(config.checkpoints_dir, 'CTPN.pth')
+
+def get_model(ctpn_weight_path=None):
+    """内部函数：加载或获取缓存的模型"""
+    weight_path = ctpn_weight_path if ctpn_weight_path else _default_weights
+    
+    if weight_path in _model_cache:
+        return _model_cache[weight_path]
+    
+    print(f"加载CTPN模型: {weight_path}")
+    model = CTPN_Model()
+    checkpoint = torch.load(weight_path, map_location=device)
+    if 'model_state_dict' in checkpoint:
+        model.load_state_dict(checkpoint['model_state_dict'])
+    else:
+        model.load_state_dict(checkpoint)
+    model.to(device)
+    model.eval()
+    
+    _model_cache[weight_path] = model
+    return model
 
 def dis(image):
     cv2.imshow('image', image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-
-def get_det_boxes(image,display = True, expand = True):
+def get_det_boxes(image, ctpn_weight_path=None, display=True, expand=True):
+    """获取检测框，支持指定CTPN权重路径"""
+    # 获取模型（支持动态加载）
+    model = get_model(ctpn_weight_path)
+    
     image = resize(image, height=height)
     image_r = image.copy()
     image_c = image.copy()
@@ -51,14 +72,11 @@ def get_det_boxes(image,display = True, expand = True):
         anchor = gen_anchor((int(h / 16), int(w / 16)), 16)
         bbox = bbox_transfor_inv(anchor, regr)
         bbox = clip_box(bbox, [h, w])
-        # print(bbox.shape)
 
         fg = np.where(cls_prob[0, :, 1] > prob_thresh)[0]
-        # print(np.max(cls_prob[0, :, 1]))
         select_anchor = bbox[fg, :]
         select_score = cls_prob[0, fg, 1]
         select_anchor = select_anchor.astype(np.int32)
-        # print(select_anchor.shape)
         keep_index = filter_bbox(select_anchor, 16)
 
         # nms
@@ -67,7 +85,6 @@ def get_det_boxes(image,display = True, expand = True):
         select_score = np.reshape(select_score, (select_score.shape[0], 1))
         nmsbox = np.hstack((select_anchor, select_score))
         keep = nms(nmsbox, 0.3)
-        # print(keep)
         select_anchor = select_anchor[keep]
         select_score = select_score[keep]
 
@@ -83,8 +100,6 @@ def get_det_boxes(image,display = True, expand = True):
                 text[idx][4] = max(text[idx][4] - 10, 0)
                 text[idx][6] = min(text[idx][6] + 10, w - 1)
 
-
-        # print(text)
         if display:
             blank = np.zeros(image_c.shape,dtype=np.uint8)
             for box in select_anchor:
@@ -106,12 +121,10 @@ def get_det_boxes(image,display = True, expand = True):
                             (255,0,0),
                             2,
                             cv2.LINE_AA)
-            # dis(image_c)
-        # print(text)
-        return text,image_c,image_r
+        return text, image_c, image_r
 
 if __name__ == '__main__':
     img_path = 'images/t1.png'
     image = cv2.imread(img_path)
-    text,image = get_det_boxes(image)
+    text, image = get_det_boxes(image)
     dis(image)
