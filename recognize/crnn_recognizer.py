@@ -105,7 +105,7 @@ class PytorchOcr():
             model_path: CRNN模型权重路径，如果为None则使用默认路径
         """
         if model_path is None:
-            model_path = get_path(r'\kaggle\working\ctpn_crnn_pytorch\checkpoints\CRNN.pth')
+            model_path = get_path('/kaggle/working/ctpn_crnn_pytorch/checkpoints/CRNN.pth')
         
         print(f"加载CRNN模型: {model_path}")
         alphabet_unicode = config.alphabet_v2
