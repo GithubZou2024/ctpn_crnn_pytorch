@@ -112,7 +112,7 @@ HTML_TEMPLATE = '''
             display: none;
             text-align: center;
             padding: 20px;
-            color: #5a9bb5;
+            color: #666;
         }
         .spinner {
             border: 3px solid #e0f2fe;
